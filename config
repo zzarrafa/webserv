@@ -1,43 +1,38 @@
-Server
-{
-    listen             127.0.0.1 8080
-    root             ./root 
-    allow_methods      GET POST 
+server {
+    port = 8000
+    host = 127.1.1.0
+    server_name = server1 server2 server3
+    error_page = /defaultPages/
+    body_size_limit = 100
 
-    upload_path        /somewhere/ 
+    location = [
+        method = GET POST DELETE
+        redirect = 302 https://google.com
+        root = ./www/html/location1
+        autoindex = off
+        default = /index.html
+        cgi = path_to_cgi
+        upload = /path_to_upload
+    ]
 
-    index index.html index.php 
-     
-    error_page      404 ./error_pages/404.html
-    error_page      405 /sdsd/dsdsd/405.html
-    autoindex off
+    location = [
+        method = GET POST DELETE
+        redirect = 302 https://google.com
+        root = ./www/html/location1
+        autoindex = on
+        default = /index.html
+        cgi = path_to_cgi
+        upload = /path_to_upload
+    ]
 
-    redirection    /doooooxsxvasvf /test/
-    
-    
+    location = [
+        method = GET POST DELETE
+        redirect = 302 https://google.com
+        root = ./www/html/location1
+        autoindex = off
+        default = /index.html
+        cgi = path_to_cgi
+        upload = /path_to_upload
+    ]
 
-
-    location /PATH03/.html
-    {
-        root .
-        autoindex on
-        allow_methods GET  POST
-    }
-    
-
-    location /users
-    {
-        root ./root/univers/user
-        autoindex on
-        allow_methods GET  POST
-    } 
-    cgi .php
-    {
-        allow_methods      POST
-        cgi_path         /Volumes/SPYDERSY/webserv/cgi-bin/php-cgi
-    }
-
-    client_max_body_size 2345
 }
-
-
