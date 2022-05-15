@@ -59,9 +59,13 @@ class server_config
 		void set_error_page(std::string);
 		void set_max_body_size(int);
 		void set_servers(std::vector<std::string>);
-		int get_port();
+		void set_locations(std::vector<location_config>);
+		int get_max_body_size();
 		std::string get_host();
 		std::string get_error_page();
+		std::vector<std::string> get_servers();
+		std::vector<location_config> get_locations();
+		int get_port();
 };
 
 #endif

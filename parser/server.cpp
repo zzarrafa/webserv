@@ -24,7 +24,7 @@ location_config::location_config(const location_config &src)
 	this->upload_path = src.upload_path;
 }
 //assignment operator
-location_config::location_config &location_config::operator=(const location_config &src)
+location_config &location_config::operator=(const location_config &src)
 {
 	this->path = src.path;
 	this->redirect = src.redirect;
@@ -33,7 +33,7 @@ location_config::location_config &location_config::operator=(const location_conf
 	this->default_file = src.default_file;
 	this->cgi_path = src.cgi_path;
 	this->upload_path = src.upload_path;
-	return (*this);
+	return *this;
 }
 //destructor
 location_config::~location_config()
@@ -132,7 +132,7 @@ server_config::server_config(const server_config &src)
 	this->locations = src.locations;
 }
 //assignment operator
-server_config::server_config &server_config::operator=(const server_config &src)
+server_config &server_config::operator=(const server_config &src)
 {
 	this->port = src.port;
 	this->host = src.host;
