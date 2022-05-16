@@ -38,6 +38,13 @@ void parse_config_file(std::string file_name)
 	}
 }
 
+bool is_comment(std::string line)
+{
+	if (line.find("#") != std::string::npos)
+		return (true);
+	return (false);
+}
+
 void	parse_config_file(std::string file_name)
 {
 	std::string line;
@@ -52,12 +59,41 @@ void	parse_config_file(std::string file_name)
 	}
 }
 
+void	set_location(std::fstream file, server_config &server)
+{
+	std::string line;
+	location_config location;
+	while (std::getline(file, line))
+	{
+		line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
+		if (line.find("]") != std::string::npos)
+			break ;
+		if (line.find("autoindex") != std::string::npos)
+		{
+			location.set_autoindex(true);
+		}
+		else if (line.find("default_file") != std::string::npos)
+		{
+			location.set_default_file(line.substr(line.find("default_file") + 13));
+		}
+		else if (line.find("cgi_path") != std::string::npos)
+		{
+			location.set_cgi_path(line.substr(line.find("cgi_path") + 9));
+		}
+		else if (line.find("upload_path") != std::string::npos)
+		{
+			location.set_upload_path(line.substr(line.find("upload_path") + 12));
+		}
+	}
+	server.locations.push_back(location);
+}
+
 void	set_server(std::fstream config_file)
 {
 	std::string line;
 	server_config server;
 	int i = 0;
-	while (std::getline((config_file, line)))
+	while (std::getline(config_file, line))
 	{
 		line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
 		if (line[0] == '#')
@@ -66,47 +102,30 @@ void	set_server(std::fstream config_file)
 		}
 		else if (line.find("}") != std::string::npos)
 		{
+			// push to array
 			break;
 		}
-		else if (line.find("port=") != std::string::npos)
+		else if (line.find("port"))
 		{
-			server.port = std::stoi(line.substr(5));
+			server.set_port(std::stoi(line.substr(line.find("=") + 1)));
 		}
-		else if (line.find("ip=") != std::string::npos)
+		else if (line.find("host"))
 		{
-			server.ip = line.substr(3);
+			server.set_host(line.substr(line.find("=") + 1));
 		}
-		else if (line.find("name=") != std::string::npos)
+		else if (line.find("error_page"))
 		{
-			server.name = line.substr(5);
+			server.set_error_page(line.substr(line.find("=") + 1));
 		}
-		else if (line.find("max_players=") != std::string::npos)
+		else if (line.find("max_body_size"))
 		{
-			server.max_players = std::stoi(line.substr(12));
+			server.set_max_body_size(std::stoi(line.substr(line.find("=") + 1)));
 		}
-		else if (line.find("password=") != std::string::npos)
+		else if (line.find("location"))
 		{
-			server.password = line.substr(9);
-		}
-		else if (line.find("map=") != std::string::npos)
-		{
-			server.map = line.substr(4);
-		}
-		else if (line.find("game_mode=") != std::string::npos)
-		{
-			server.game_mode = line.substr(10);
-		}
-		else if (line.find("max_players=") != std::string::npos)
-		{
-			server.max_players = std::stoi(line.substr(12));
-		}
-		else if (line.find("max_bombs=") != std::string::npos)
-		{
-			server.max_bombs = std::stoi(line.substr(10));
+			set_location(config_file, &server);
 		}
 	}
-	
-
 }
 
 int     main(int argc, char **argv)
