@@ -1,6 +1,6 @@
 NAME = webserv
 
-SRCS = webserv.cpp tools/tools.cpp parser/parsefile.cpp parser/server.cpp parser/connection.cpp
+SRCS = webserv.cpp tools/tools.cpp parser/parsefile.cpp parser/server.cpp parser/connection.cpp request.cpp
 
 all: $(NAME)
 

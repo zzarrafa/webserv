@@ -4,6 +4,7 @@
 #include "parser/parsefile.hpp"
 #include "parser/server.hpp"
 #include "tools/tools.hpp"
+#include "request.hpp"
 
 
 #endif

@@ -276,6 +276,7 @@ location_config parsefile::fill_locations(std::ifstream &file)
 				throw std::runtime_error("duplicate upload path in config file");
 		}
 		else
+		{
 			throw std::runtime_error("Invalid syntax in config file");
 	}
 	return (location);
