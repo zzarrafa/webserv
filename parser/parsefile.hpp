@@ -8,12 +8,23 @@
 #include <sstream>
 #include <algorithm>
 #include "server.hpp"
-#include "../tools.hpp"
+#include "../tools/tools.hpp"
 
 class parsefile{
+	private:
+		std::vector<server_config> _servers;
+
 	public:
-	std::vector<server_config> servers;
-	
+		parsefile();
+		~parsefile();
+		parsefile(const parsefile &src);
+		parsefile &operator=(const parsefile &src);
+		parsefile(std::string file_name);
+		void parse(std::ifstream &file);
+		location_config fill_locations(std::ifstream &file);
+		void fill_servers(std::ifstream &file);
+		bool is_empty(std::string file_name);
+		void print_servers();
 };
 
 #endif

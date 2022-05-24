@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "*.js": "javascript",
         "memory": "cpp",
         "__bit_reference": "cpp",
         "__config": "cpp",
@@ -61,6 +62,11 @@
         "typeinfo": "cpp",
         "unordered_map": "cpp",
         "utility": "cpp",
-        "vector": "cpp"
-    }
+        "vector": "cpp",
+        "fstream": "cpp",
+        "deque": "cpp",
+        "iomanip": "cpp",
+        "stack": "cpp"
+    },
+    "C_Cpp.errorSquiggles": "Enabled"
 }

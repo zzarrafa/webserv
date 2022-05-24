@@ -9,9 +9,9 @@ class location_config
 {
 	private:
 		std::vector<std::string>	methods;
-		std::string					redirect;
-		std::string					path;
-		bool						autoindex;
+		std::vector<std::string>	redirect;
+		std::string					root;
+		std::string					autoindex;
 		std::string					default_file;
 		std::string					cgi_path;
 		std::string					upload_path;
@@ -22,17 +22,17 @@ class location_config
 		location_config(const location_config &src);
 		location_config &operator=(const location_config &src);
 
-		std::string					get_redirect();
+		std::vector<std::string>	get_redirect();
 		std::vector<std::string>	get_methods();
-		std::string					get_path();
-		bool						get_autoindex();
+		std::string					get_root();
+		std::string					get_autoindex();
 		std::string					get_default_file();
 		std::string					get_cgi_path();
 		std::string					get_upload_path();
-		void set_redirect(std::string redirect);
+		void set_redirect(std::vector<std::string> redirect);
 		void set_methods(std::vector<std::string> methods);
-		void set_path(std::string path);
-		void set_autoindex(bool autoindex);
+		void set_root(std::string path);
+		void set_autoindex(std::string autoindex);
 		void set_default_file(std::string default_file);
 		void set_cgi_path(std::string cgi_path);
 		void set_upload_path(std::string upload_path);
@@ -66,6 +66,7 @@ class server_config
 		std::vector<std::string> get_servers();
 		std::vector<location_config> get_locations();
 		int get_port();
+		void add_location(location_config src);
 };
 
 #endif

@@ -4,10 +4,10 @@
 // constructor
 location_config::location_config()
 {
-	this->path = "";
-	this->redirect = "";
+	this->root = "";
+	this->redirect = std::vector<std::string>();
 	this->methods = std::vector<std::string>();
-	this->autoindex = false;
+	this->autoindex = "";
 	this->default_file = "";
 	this->cgi_path = "";
 	this->upload_path = "";
@@ -15,7 +15,7 @@ location_config::location_config()
 //copy constructor
 location_config::location_config(const location_config &src)
 {
-	this->path = src.path;
+	this->root = src.root;
 	this->redirect = src.redirect;
 	this->methods = src.methods;
 	this->autoindex = src.autoindex;
@@ -26,7 +26,7 @@ location_config::location_config(const location_config &src)
 //assignment operator
 location_config &location_config::operator=(const location_config &src)
 {
-	this->path = src.path;
+	this->root = src.root;
 	this->redirect = src.redirect;
 	this->methods = src.methods;
 	this->autoindex = src.autoindex;
@@ -40,7 +40,7 @@ location_config::~location_config()
 {
 }
 //getters
-std::string location_config::get_redirect()
+std::vector<std::string> location_config::get_redirect()
 {
 	return (this->redirect);
 }
@@ -50,12 +50,12 @@ std::vector<std::string> location_config::get_methods()
 	return (this->methods);
 }
 
-std::string location_config::get_path()
+std::string location_config::get_root()
 {
-	return (this->path);
+	return (this->root);
 }
 
-bool location_config::get_autoindex()
+std::string location_config::get_autoindex()
 {
 	return (this->autoindex);
 }
@@ -75,7 +75,7 @@ std::string location_config::get_upload_path()
 	return (this->upload_path);
 }
 //setters
-void location_config::set_redirect(std::string redirect)
+void location_config::set_redirect(std::vector<std::string> redirect)
 {
 	this->redirect = redirect;
 }
@@ -85,12 +85,12 @@ void location_config::set_methods(std::vector<std::string> methods)
 	this->methods = methods;
 }
 
-void location_config::set_path(std::string path)
+void location_config::set_root(std::string root)
 {
-	this->path = path;
+	this->root = root;
 }
 
-void location_config::set_autoindex(bool autoindex)
+void location_config::set_autoindex(std::string autoindex)
 {
 	this->autoindex = autoindex;
 }
@@ -114,7 +114,7 @@ void location_config::set_upload_path(std::string upload_path)
 //constructor
 server_config::server_config()
 {
-	this->port = 8080;
+	this->port = 0;
 	this->host = "" ;
 	this->error_page = "";
 	this->max_body_size = 0;
@@ -206,4 +206,9 @@ void server_config::set_servers(std::vector<std::string> servers)
 void server_config::set_locations(std::vector<location_config> locations)
 {
 	this->locations = locations;
+}
+
+void server_config::add_location(location_config location)
+{
+	this->locations.push_back(location);
 }
