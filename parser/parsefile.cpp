@@ -73,7 +73,6 @@ void parsefile::fill_servers(std::ifstream &file)
 	size_t i = 0;
 	while (std::getline(file, line))
 	{
-		std::cout << line << std::endl;
 		std::string tmp = line;
 		line.erase(std::remove_if(line.begin(), line.end(), isspace), line.end());
 		if (line.empty() || line.find("#") != std::string::npos)
@@ -278,7 +277,6 @@ location_config parsefile::fill_locations(std::ifstream &file)
 		}
 		else
 		{
-			std::cout << "here!!!!" << std::endl;
 			throw std::runtime_error("Invalid syntax in config file");
 		}
 	}

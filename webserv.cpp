@@ -7,7 +7,13 @@ int main(int argc, char **argv)
         if (argc == 2)
         {
             parsefile config(argv[1]);
-            config.print_servers();
+            // config.print_servers();
+            std::ifstream file("request");
+            request req(file);
+            req.print_request();
+
+
+            
             // socket that takes the config file instance
             // code here
         }
