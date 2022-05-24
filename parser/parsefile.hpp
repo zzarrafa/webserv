@@ -25,6 +25,7 @@ class parsefile{
 		void fill_servers(std::ifstream &file);
 		bool is_empty(std::string file_name);
 		void print_servers();
+		std::vector<server_config> &get_servers();
 };
 
 #endif

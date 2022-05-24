@@ -120,6 +120,7 @@ server_config::server_config()
 	this->max_body_size = 0;
 	this->servers = std::vector<std::string>();
 	this->locations = std::vector<location_config>();
+	this->fd_socket = 0;
 }
 //copy constructor
 server_config::server_config(const server_config &src)
@@ -130,6 +131,8 @@ server_config::server_config(const server_config &src)
 	this->max_body_size = src.max_body_size;
 	this->servers = src.servers;
 	this->locations = src.locations;
+	this->fd_socket = src.fd_socket;
+
 }
 //assignment operator
 server_config &server_config::operator=(const server_config &src)
@@ -140,6 +143,7 @@ server_config &server_config::operator=(const server_config &src)
 	this->max_body_size = src.max_body_size;
 	this->servers = src.servers;
 	this->locations = src.locations;
+	this->fd_socket = src.fd_socket;
 	return (*this);
 }
 //destructor
@@ -211,4 +215,41 @@ void server_config::set_locations(std::vector<location_config> locations)
 void server_config::add_location(location_config location)
 {
 	this->locations.push_back(location);
+}
+void server_config::create_server()
+{
+	int opt =1;
+	struct sockaddr_in address;
+	 if( (fd_socket = socket(AF_INET , SOCK_STREAM , 0)) == 0)  
+            {  
+                perror("socket failed");  
+                exit(EXIT_FAILURE);  
+            }
+			 fcntl(fd_socket, F_SETFL, O_NONBLOCK);
+            if( setsockopt(fd_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0 )  
+            {  
+                perror("setsockopt");  
+                exit(EXIT_FAILURE);  
+    
+            }
+        address.sin_family = AF_INET;  
+        address.sin_addr.s_addr = INADDR_ANY;  
+        address.sin_port = htons(get_port());
+
+            if (bind(fd_socket, (struct sockaddr *)&address, sizeof(address))<0)  
+            {  
+                perror("bind failed");  
+                exit(EXIT_FAILURE);  
+            }
+            if (listen(fd_socket, 3) < 0)  
+            {  
+                perror("listen");  
+                exit(EXIT_FAILURE);  
+            }
+			std::cout << "Created " << fd_socket <<  " For Port " << get_port() << std::endl;
+}
+
+int server_config::get_fd_socket()
+{
+	return fd_socket;
 }

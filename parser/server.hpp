@@ -4,7 +4,15 @@
 #include <string>
 #include <vector>
 #include <iostream>
-
+#include <stdlib.h> 
+#include <errno.h> 
+#include <unistd.h>   
+#include <arpa/inet.h>    
+#include <sys/types.h> 
+#include <sys/socket.h> 
+#include <netinet/in.h> 
+#include <sys/time.h>
+#include <fcntl.h>
 class location_config
 {
 	private:
@@ -47,6 +55,7 @@ class server_config
 		int					max_body_size;
 		std::vector<std::string> servers;
 		std::vector<location_config> locations;
+		int fd_socket;
 
 	public:
 		server_config();
@@ -67,6 +76,8 @@ class server_config
 		std::vector<location_config> get_locations();
 		int get_port();
 		void add_location(location_config src);
+		void create_server();
+		int get_fd_socket();
 };
 
 #endif
