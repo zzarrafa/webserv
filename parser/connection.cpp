@@ -49,7 +49,7 @@ while (true)
         // address = s.get_servers()[i].get_fd_socket();
         // addrlen = sizeof(address);
         
-        if(FD_ISSET(fd, &readfds) || FD_ISSET(fd, &writefds) )
+        if(FD_ISSET(fd, &readfds) || FD_ISSET(fd, &writefds))
         {
             std::cout << "hhhh2 \n";
             if (std::count(listOffd.begin(), listOffd.end(), fd))
