@@ -90,8 +90,12 @@ void connection::chihaja(parsefile s)
                     }
                     else
                     {
-                        char *hello = (char *)("HTTP/1.1 200 OK\nContent-length: 17\n\r\nTello from server");
-                        write(fd, hello, strlen(hello));
+                        // response rep(server, req);
+                        // char * = rep.get_header();
+                        // map<int fd, >
+                        // response_handler(); // returns a string 
+                        char *tello = (char *)("HTTP/1.1 200 OK\nContent-length: 17\n\r\nTello from server");
+                        write(fd, tello, strlen(tello));
                         FD_CLR(fd, &copy_write);
                         close(fd);
                     }

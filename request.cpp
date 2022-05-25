@@ -13,7 +13,6 @@ request::request(const request &src)
     this->_method = src._method;
     this->_path = src._path;
     this->_version = src._version;
-    this->_user_agent = src._user_agent;
     this->_host = src._host;
     this->_type = src._type;
     this->_body = src._body;
@@ -27,7 +26,6 @@ request &request::operator=(const request &src)
     this->_method = src._method;
     this->_path = src._path;
     this->_version = src._version;
-    this->_user_agent = src._user_agent;
     this->_host = src._host;
     this->_type = src._type;
     this->_body = src._body;
@@ -50,11 +48,6 @@ void request::set_path(std::string path)
 void request::set_version(std::string version)
 {
     this->_version = version;
-}
-
-void request::set_user_agent(std::string user_agent)
-{
-    this->_user_agent = user_agent;
 }
 
 void request::set_host(std::string host)
@@ -102,11 +95,6 @@ std::string request::get_version()
     return (this->_version);
 }
 
-std::string request::get_user_agent()
-{
-    return (this->_user_agent);
-}
-
 std::string request::get_host()
 {
     return (this->_host);
@@ -137,6 +125,11 @@ int request::get_length()
     return (this->_length);
 }
 
+bool    request::get_is_complete()
+{
+    return (this->_is_complete);
+}
+
 std::map<std::string, std::string> request::get_headers()
 {
     return (this->_headers);
@@ -147,7 +140,54 @@ void request::add_headers(std::string key, std::string value)
     this->_headers.insert(std::pair<std::string, std::string>(key, value));
 }
 
-request::request(std::ifstream &file)
+request   request::parse_header(std::string str)
+{
+    std::string     line;
+    std::string     key;
+    std::string     value;
+    std::string     tmp;
+    std::string     chars = " \t\n\r";
+    bool is_first = true;
+    int             pos;
+    std::stringstream ss(str);
+    request req;
+
+    while (getline(ss, line, '\r'))
+    {
+        if (is_first)
+        {
+            is_first = false;
+            std::vector<std::string> tokens;
+            tokens = split(line, ' ');
+            req._method = tokens[0];
+            req._path = tokens[1];
+            req._version = tokens[2];
+        }
+        else
+        {
+            pos = line.find(":");
+            key = line.substr(0, pos);
+            value = line.substr(pos + 1, line.size());
+            if (key == "Host")
+                req._host = Trim(value, chars);
+            else if (key == "Content-Type")
+                req._type = Trim(value, chars);
+            else if (key == "Content-Length")
+                req._length = std::stoi(value);
+            else if (key == "Connection")
+                req._connection = Trim(value, chars);
+            else if (key == "Accept-Encoding")
+                req._encoding = Trim(value, chars);
+            else
+                req._headers.insert(std::pair<std::string, std::string>(key, value));
+        }
+    }
+    if (req._method == "GET" || req._method == "DELETE")
+        req._is_complete = true;
+    return (req);
+}
+
+request::request(std::string str)
 {
     std::string     line;
     std::string     key;
@@ -157,9 +197,10 @@ request::request(std::ifstream &file)
     bool            is_first = true;
     int             pos;
     bool            is_body = false;
+    std::stringstream ss(str);
 
 
-    while (getline(file, line))
+    while (getline(ss, line))
     {
         if (is_first)
         {
@@ -206,7 +247,6 @@ void request::print_request()
     std::cout << "> Method: " << this->_method << std::endl;
     std::cout << "> Path: " << this->_path << std::endl;
     std::cout << "> Version: " << this->_version << std::endl;
-    std::cout << "> User-Agent: " << this->_user_agent << std::endl;
     std::cout << "> Host: " << this->_host << std::endl;
     std::cout << "> Type: " << this->_type << std::endl;
     std::cout << "> Connection: " << this->_connection << std::endl;

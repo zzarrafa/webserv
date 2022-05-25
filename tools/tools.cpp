@@ -82,11 +82,10 @@ bool is_one_string(std::string str)
 	}
 	return (true);
 }
+
 std::string   split_file_path(std::string type)
-{
-    
+{    
 	const char *ok;
-    int ind;
 
     ok = strrchr(type.c_str(), '.');
 	std::string res(ok);

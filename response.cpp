@@ -9,6 +9,9 @@ WS::Response::~Response()
 {
     
 }
+
+
+
 void WS::Response::set_status_code(int status)
 {
     this->status_code = status;
@@ -57,7 +60,7 @@ bool WS::Response::isDir(std::string path)
 
 
 
-int WS::Response::search_for_path(server_config *s,std::string path)
+int WS::Response::search_for_path(server_config &s,std::string path)
 {
     int i ,j;
     // std::map<int, server_config> mapserver;
@@ -75,7 +78,7 @@ int WS::Response::search_for_path(server_config *s,std::string path)
     //     }
     // mapserver.insert(std::make_pair(-1,s.get_servers()[0]));       
     // return mapserver;
-    std::vector<location_config> locations = s->get_locations();
+    std::vector<location_config> locations = s.get_locations();
     
         for (i =0; i < locations.size() ; i++)
              if (locations[i].get_default_file() == path)
@@ -120,43 +123,7 @@ void WS::Response::autoindex(std::string path)
 	header += body;
 }
 
-void WS::Response::get_method(server_config *s,std::string path)
-{
-    // std::map<int, server_config>::iterator ite = search_for_path(s,path).begin();
-    // int index = ite->first;
-    // server_config serv = ite->second;
-    // std::vector<location_config> locations = serv.get_locations();
-    // std::string file_name = locations[index].get_default_file() + "/" + path;
-    int index = search_for_path(s,path);
-    std::vector<location_config> locations = s->get_locations();
-    std::string file_name = locations[index].get_default_file() + "/" + path;
 
-
-    if (index == -1)
-       { 
-           set_status_code(404);
-           return;
-       }
-    
-    std::vector<std::string>::iterator it;
-    it = std::find(locations[index].get_methods().begin(),locations[index].get_methods().end(),"GET") ;
-    if (it == locations[index].get_methods().end())
-        {
-            set_status_code(405);
-            return;
-        }
-    if(isDir(file_name) && locations[index].get_autoindex() == "of")
-        {
-            set_status_code(403);
-            return;
-        }
-    if (isDir(file_name) && locations[index].get_autoindex() == "on")
-    {
-        autoindex(file_name);
-        return;
-    }
-     get_file(file_name);
-}
 void WS::Response::get_file(std::string file_name)
 {
     std::ifstream f(file_name);
@@ -220,4 +187,49 @@ void WS::Response::delete_method(std::string filename)
         set_status_code(404);
     else
         set_status_code(200);
+}
+
+void WS::Response::get_method(server_config &s,std::string path)
+{
+    int index = search_for_path(s, path);
+    std::vector<location_config> locations = s.get_locations();
+    if (index == -1)
+    { 
+        set_status_code(404);
+        return;
+    }
+    std::string file_name = locations[index].get_root() + "/" + path;
+    std::vector<std::string>::iterator it;
+    it = std::find(locations[index].get_methods().begin(),locations[index].get_methods().end(),"GET") ;
+    if (it == locations[index].get_methods().end())
+    {
+        set_status_code(405);
+        return;
+    }
+    if (isDir(file_name) && locations[index].get_autoindex() == "of")
+    {
+        set_status_code(403);
+        return;
+    }
+    if (isDir(file_name) && locations[index].get_autoindex() == "on")
+    {
+        autoindex(file_name);
+        return;
+    }
+    // 413
+    get_file(file_name);
+}
+
+WS::Response::Response(server_config &server, request &req)
+{
+    if (req.get_method() == "GET")
+    {
+        get_method(server, req.get_path());
+    }
+    else if (req.get_method() == "DELETE")
+    {
+    }
+    else if (req.get_method() == "POST")
+    {
+    }
 }
