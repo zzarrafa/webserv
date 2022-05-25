@@ -78,7 +78,10 @@ void connection::chihaja(parsefile s)
                                 chunking_map.insert(std::make_pair(fd, buffer));
                         }
                         else if (ret == 0 || ret < server.get_max_body_size())
+                        {
+                            
                             chunking_map.erase(fd);
+                        }
                         else
                             throw std::runtime_error("Error in reading");
                         std::cout << buffer << std::endl;
