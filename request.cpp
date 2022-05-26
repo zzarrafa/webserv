@@ -75,7 +75,7 @@ void request::set_encoding(std::string encoding)
     this->_encoding = encoding;
 }
 
-void request::set_length(int length)
+void request::set_length(size_t length)
 {
     this->_length = length;
 }
@@ -120,12 +120,12 @@ std::string request::get_connection()
     return (this->_connection);
 }
 
-int request::get_length()
+size_t request::get_length()
 {
     return (this->_length);
 }
 
-bool    request::get_is_complete()
+bool request::get_is_complete()
 {
     return (this->_is_complete);
 }
@@ -140,15 +140,15 @@ void request::add_headers(std::string key, std::string value)
     this->_headers.insert(std::pair<std::string, std::string>(key, value));
 }
 
-request   request::parse_header(std::string str)
+request request::parse_header(std::string str)
 {
-    std::string     line;
-    std::string     key;
-    std::string     value;
-    std::string     tmp;
-    std::string     chars = " \t\n\r";
+    std::string line;
+    std::string key;
+    std::string value;
+    std::string tmp;
+    std::string chars = " \t\n\r";
     bool is_first = true;
-    int             pos;
+    int pos;
     std::stringstream ss(str);
     request req;
 
@@ -187,39 +187,42 @@ request   request::parse_header(std::string str)
     return (req);
 }
 
-request::request(std::string str)
+request::request(std::string &file_name)
 {
-    std::string     line;
-    std::string     key;
-    std::string     value;
-    std::string     tmp;
-    std::string     chars = " \t\n\r";
-    bool            is_first = true;
-    int             pos;
-    bool            is_body = false;
-    std::stringstream ss(str);
+    std::string line;
+    std::string key;
+    std::string value;
+    std::string chars = " \t\n\r";
+    std::string end = "\r";
+    std::ifstream file(file_name);
 
+    bool is_first = true;
+    int pos;
+    bool is_body = false;
 
-    while (getline(ss, line))
+    while (getline(file, line) && !(this->_is_complete))
     {
         if (is_first)
         {
-            is_first = false;
             std::vector<std::string> tokens;
             tokens = split(line, ' ');
             this->_method = tokens[0];
             this->_path = tokens[1];
             this->_version = tokens[2];
+            tokens.clear();
+            is_first = false;
         }
-        else if (is_body)
-        {
-            this->_body += line;
-            this->_body += "\n";
-        }
-        else if (line.empty())
+        else if (line == end)
         {
             is_body = true;
             continue;
+        }
+        else if (is_body)
+        {
+            if (this->_method == "GET" || this->_method == "DELETE" || this->_body.size() >= this->_length)
+                this->_is_complete = true;
+            else
+                this->_body += line + "\n";
         }
         else
         {
@@ -240,6 +243,9 @@ request::request(std::string str)
                 this->_headers.insert(std::pair<std::string, std::string>(key, value));
         }
     }
+    if (this->_body.size() > 0)
+        this->_body.pop_back();
+    file.close();
 }
 
 void request::print_request()
@@ -257,5 +263,6 @@ void request::print_request()
     {
         std::cout << "  - " << it->first << ": " << it->second << std::endl;
     }
+    std::cout << "string size: " << this->_body.size() << std::endl;
     std::cout << "• Body: " << this->_body << std::endl;
 }
