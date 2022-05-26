@@ -2,7 +2,7 @@
 
 void connection::chihaja(parsefile s)
 {
-	std::map<int, std::string> chunking_map;
+	std::map<int, request> chunking_map;
 	std::map<int, server_config> fdServer_map;
 	std::map<int, server_config> fdClient_map;
 	std::vector<int> listOffd;
@@ -73,33 +73,42 @@ void connection::chihaja(parsefile s)
 						else if (ret > 0)
 						{
 							std::ofstream file;
-							std::string filename = "request" + std::to_string(fd);
+							std::ifstream chunk;
+							std::string filename = "request" + std::to_string(fd) + ".txt";
 							file.open(filename);
 							file << buffer;
 							file.close();
-							request req(filename);
-							req.print_request();
+							if (chunking_map.find(fd) == chunking_map.end())
+							{
+								std::cout << "first time" << std::endl;
+								request	req(filename);
+								if (!req.get_is_complete())
+									chunking_map.insert(std::make_pair(fd, req));
+							}
+							else if (chunking_map.find(fd) != chunking_map.end() && !chunking_map[fd].get_is_complete())
+							{
+
+								chunk.open(chunking_map[fd].get_body());
+								chunking_map[fd].parse_chunked_body(chunk);
+								chunking_map[fd].print_request();
+							}
+							if (chunking_map[fd].get_is_complete())
+							{
+								std::cout << "is over" << std::endl;
+								FD_SET(fd, &copy_write);
+								FD_CLR(fd, &copy_read);
+								chunking_map.erase(fd);
+							}
 						}
-						// if (ret == SIZE_OF_BUFFER)
-						// {
-						// 	if (chunking_map.find(fd) != chunking_map.end())
-						// 	{
-						// 		std::string tmp = chunking_map[fd];
-						// 		tmp += buffer;
-						// 		chunking_map[fd] = tmp;
-						// 	}
-						// 	else
-						// 		chunking_map.insert(std::make_pair(fd, buffer));
-						// }
-						// else if (ret == 0 || ret < SIZE_OF_BUFFER)
-						// {
-						// 	chunking_map.erase(fd);
-						// }
-						// else
-						// 	throw std::runtime_error("Error in reading");
-						// std::cout << buffer << std::endl;
-						FD_SET(fd, &copy_write);
-						FD_CLR(fd, &copy_read);
+						else if (ret == 0)
+						{
+							close(fd);
+							FD_CLR(fd, &copy_read);
+							fdClient_map.erase(fd);
+							listOffd.erase(std::remove(listOffd.begin(), listOffd.end(), fd), listOffd.end());
+						}
+						else
+							throw std::runtime_error("Read error");
 					}
 					else
 					{

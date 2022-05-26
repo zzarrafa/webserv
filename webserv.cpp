@@ -11,9 +11,6 @@ int main(int argc, char **argv)
             parsefile config(argv[1]);
             // config.print_servers();
             // config.get_servers();
-            std::ifstream file("request");
-            request req(file);
-            req.print_request();
 
 
             

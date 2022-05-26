@@ -12,6 +12,9 @@ clean:
 
 fclean: clean
 
+start: $(NAME)
+	@./$(NAME) config.conf
+
 re: fclean all
 
 .PHONY: all clean fclean re

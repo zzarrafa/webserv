@@ -224,3 +224,11 @@ std::string	formatted_time(void)
 
 	return std::string(buffer);
 }
+
+size_t hex_to_int(std::string str)
+{
+	size_t ret = 0;
+    std::istringstream ss(str);
+    ss >> std::hex >> ret;
+	return (ret);
+}

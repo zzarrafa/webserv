@@ -12,7 +12,7 @@
 #include <netinet/in.h> 
 #include <sys/time.h>
 
-#define SIZE_OF_BUFFER 1024
+#define SIZE_OF_BUFFER 2048
 
 
 class connection

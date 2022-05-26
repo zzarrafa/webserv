@@ -47,8 +47,8 @@ public:
     size_t get_length();
     bool get_is_complete();
     std::map<std::string, std::string> get_headers();
-    request parse_header(std::string str);
     void print_request();
+    std::string parse_chunked_body(std::ifstream &file);
 };
 
 #endif

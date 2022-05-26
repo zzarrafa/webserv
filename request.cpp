@@ -19,6 +19,7 @@ request::request(const request &src)
     this->_connection = src._connection;
     this->_encoding = src._encoding;
     this->_length = src._length;
+    this->_is_complete = src._is_complete;
 }
 
 request &request::operator=(const request &src)
@@ -32,7 +33,25 @@ request &request::operator=(const request &src)
     this->_connection = src._connection;
     this->_encoding = src._encoding;
     this->_length = src._length;
+    this->_is_complete = src._is_complete;
     return (*this);
+}
+
+void request::print_request()
+{
+    std::cout << "> Method: " << this->_method << std::endl;
+    std::cout << "> Path: " << this->_path << std::endl;
+    std::cout << "> Version: " << this->_version << std::endl;
+    std::cout << "> Host: " << this->_host << std::endl;
+    std::cout << "> Type: " << this->_type << std::endl;
+    std::cout << "> Connection: " << this->_connection << std::endl;
+    std::cout << "> Encoding: " << this->_encoding << std::endl;
+    std::cout << "> Length: " << this->_length << std::endl;
+    std::cout << "• Rest of the Headers: " << std::endl;
+    for (auto std::map<std::string, std::string>::iterator it = this->_headers.begin(); it != this->_headers.end(); ++it)
+        std::cout << "  - " << it->first << ": " << it->second << std::endl;
+    std::cout << "string size: " << this->_body.size() << std::endl;
+    std::cout << "• Body: " << this->_body << std::endl;
 }
 
 void request::set_method(std::string method)
@@ -140,53 +159,6 @@ void request::add_headers(std::string key, std::string value)
     this->_headers.insert(std::pair<std::string, std::string>(key, value));
 }
 
-request request::parse_header(std::string str)
-{
-    std::string line;
-    std::string key;
-    std::string value;
-    std::string tmp;
-    std::string chars = " \t\n\r";
-    bool is_first = true;
-    int pos;
-    std::stringstream ss(str);
-    request req;
-
-    while (getline(ss, line, '\r'))
-    {
-        if (is_first)
-        {
-            is_first = false;
-            std::vector<std::string> tokens;
-            tokens = split(line, ' ');
-            req._method = tokens[0];
-            req._path = tokens[1];
-            req._version = tokens[2];
-        }
-        else
-        {
-            pos = line.find(":");
-            key = line.substr(0, pos);
-            value = line.substr(pos + 1, line.size());
-            if (key == "Host")
-                req._host = Trim(value, chars);
-            else if (key == "Content-Type")
-                req._type = Trim(value, chars);
-            else if (key == "Content-Length")
-                req._length = std::stoi(value);
-            else if (key == "Connection")
-                req._connection = Trim(value, chars);
-            else if (key == "Accept-Encoding")
-                req._encoding = Trim(value, chars);
-            else
-                req._headers.insert(std::pair<std::string, std::string>(key, value));
-        }
-    }
-    if (req._method == "GET" || req._method == "DELETE")
-        req._is_complete = true;
-    return (req);
-}
-
 request::request(std::string &file_name)
 {
     std::string line;
@@ -199,7 +171,6 @@ request::request(std::string &file_name)
     bool is_first = true;
     int pos;
     bool is_body = false;
-
     while (getline(file, line) && !(this->_is_complete))
     {
         if (is_first)
@@ -219,10 +190,15 @@ request::request(std::string &file_name)
         }
         else if (is_body)
         {
-            if (this->_method == "GET" || this->_method == "DELETE" || this->_body.size() >= this->_length)
-                this->_is_complete = true;
+            if (this->_encoding == "chunked")
+                this->_body = parse_chunked_body(file);
             else
-                this->_body += line + "\n";
+            {
+                if (this->_method == "GET" || this->_method == "DELETE" || this->_body.size() >= this->_length)
+                    this->_is_complete = true;
+                else
+                    this->_body += line + "\n";
+            }
         }
         else
         {
@@ -237,7 +213,7 @@ request::request(std::string &file_name)
                 this->_length = std::stoi(value);
             else if (key == "Connection")
                 this->_connection = Trim(value, chars);
-            else if (key == "Accept-Encoding")
+            else if (key == "Transfer-Encoding")
                 this->_encoding = Trim(value, chars);
             else
                 this->_headers.insert(std::pair<std::string, std::string>(key, value));
@@ -248,21 +224,21 @@ request::request(std::string &file_name)
     file.close();
 }
 
-void request::print_request()
+std::string request::parse_chunked_body(std::ifstream &file)
 {
-    std::cout << "> Method: " << this->_method << std::endl;
-    std::cout << "> Path: " << this->_path << std::endl;
-    std::cout << "> Version: " << this->_version << std::endl;
-    std::cout << "> Host: " << this->_host << std::endl;
-    std::cout << "> Type: " << this->_type << std::endl;
-    std::cout << "> Connection: " << this->_connection << std::endl;
-    std::cout << "> Encoding: " << this->_encoding << std::endl;
-    std::cout << "> Length: " << this->_length << std::endl;
-    std::cout << "• Rest of the Headers: " << std::endl;
-    for (auto std::map<std::string, std::string>::iterator it = this->_headers.begin(); it != this->_headers.end(); ++it)
+    std::string line;
+    std::ofstream out_file;
+	std::string filename = "body";
+	out_file.open(filename);
+    while (getline(file, line))
     {
-        std::cout << "  - " << it->first << ": " << it->second << std::endl;
+        if (line == "\r")
+            break;
+        out_file << line << std::endl;
+        this->_length -= line.size() + 1;
     }
-    std::cout << "string size: " << this->_body.size() << std::endl;
-    std::cout << "• Body: " << this->_body << std::endl;
+    out_file.close();
+    if (this->_length <= 0)
+        this->_is_complete = true;
+    return (filename);
 }
