@@ -1,4 +1,4 @@
-#include "tools.hpp"
+#include "../webserv.hpp"
 
 std::string& leftTrim(std::string& str, std::string& chars)
 {
@@ -84,7 +84,7 @@ bool is_one_string(std::string str)
 }
 
 std::string   split_file_path(std::string type)
-{    
+{
 	const char *ok;
 
     ok = strrchr(type.c_str(), '.');
@@ -174,6 +174,7 @@ std::string	readable_fs(double size) {
     sprintf(buf, "%.*f %s", i, size, units[i]);
     return  std::string(buf);
 }
+
 std::string get_time(time_t unix_timestamp)
 {
 	char time_buf[80];
@@ -183,6 +184,7 @@ std::string get_time(time_t unix_timestamp)
 
 	return std::string(time_buf);
 }
+
 std::vector<Fileinfos>	listofFiles(std::string path)
 {
 
@@ -206,7 +208,6 @@ std::vector<Fileinfos>	listofFiles(std::string path)
 			}
 			list.push_back(obj);
 	}
-
 	closedir(dir);
 	return list;
 }
@@ -231,4 +232,12 @@ size_t hex_to_int(std::string str)
     std::istringstream ss(str);
     ss >> std::hex >> ret;
 	return (ret);
+}
+
+off_t fsize(const char *filename) {
+    struct stat st;
+
+    if (stat(filename, &st) == 0)
+        return st.st_size;
+    return -1;
 }

@@ -1,4 +1,4 @@
-#include "server.hpp"
+#include "../webserv.hpp"
 
 // location
 // constructor
@@ -11,6 +11,7 @@ location_config::location_config()
 	this->default_file = "";
 	this->cgi_path = "";
 	this->upload_path = "";
+	this->prefix = "";
 }
 //copy constructor
 location_config::location_config(const location_config &src)
@@ -22,6 +23,7 @@ location_config::location_config(const location_config &src)
 	this->default_file = src.default_file;
 	this->cgi_path = src.cgi_path;
 	this->upload_path = src.upload_path;
+	this->prefix = src.prefix;
 }
 //assignment operator
 location_config &location_config::operator=(const location_config &src)
@@ -33,12 +35,15 @@ location_config &location_config::operator=(const location_config &src)
 	this->default_file = src.default_file;
 	this->cgi_path = src.cgi_path;
 	this->upload_path = src.upload_path;
+	this->prefix = src.prefix;
 	return *this;
 }
+
 //destructor
 location_config::~location_config()
 {
 }
+
 //getters
 std::vector<std::string> location_config::get_redirect()
 {
@@ -74,6 +79,11 @@ std::string location_config::get_upload_path()
 {
 	return (this->upload_path);
 }
+
+std::string location_config::get_prefix()
+{
+	return (this->prefix);
+}
 //setters
 void location_config::set_redirect(std::vector<std::string> redirect)
 {
@@ -108,6 +118,16 @@ void location_config::set_cgi_path(std::string cgi_path)
 void location_config::set_upload_path(std::string upload_path)
 {
 	this->upload_path = upload_path;
+}
+
+void location_config::set_prefix(std::string prefix)
+{
+	this->prefix = prefix;
+}
+
+int server_config::get_fd_socket()
+{
+	return fd_socket;
 }
 
 //server
@@ -216,40 +236,84 @@ void server_config::add_location(location_config location)
 {
 	this->locations.push_back(location);
 }
+
 void server_config::create_server()
 {
 	int opt =1;
 	struct sockaddr_in address;
-	 if( (fd_socket = socket(AF_INET , SOCK_STREAM , 0)) == 0)  
-            {  
-                perror("socket failed");  
-                exit(EXIT_FAILURE);  
-            }
-			 fcntl(fd_socket, F_SETFL, O_NONBLOCK);
-            if( setsockopt(fd_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0 )  
-            {  
-                perror("setsockopt");  
-                exit(EXIT_FAILURE);  
-    
-            }
-        address.sin_family = AF_INET;  
-        address.sin_addr.s_addr = INADDR_ANY;  
-        address.sin_port = htons(get_port());
-
-            if (bind(fd_socket, (struct sockaddr *)&address, sizeof(address))<0)  
-            {  
-                perror("bind failed");  
-                exit(EXIT_FAILURE);  
-            }
-            if (listen(fd_socket, 3) < 0)  
-            {  
-                perror("listen");  
-                exit(EXIT_FAILURE);  
-            }
-			std::cout << "Created " << fd_socket <<  " For Port " << get_port() << std::endl;
+	if( (fd_socket = socket(AF_INET , SOCK_STREAM , 0)) == 0)
+	{
+		perror("socket failed");
+		exit(EXIT_FAILURE);
+	}
+	fcntl(fd_socket, F_SETFL, O_NONBLOCK);
+	if( setsockopt(fd_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0 )
+	{
+		perror("setsockopt");
+		exit(EXIT_FAILURE);
+	}
+	address.sin_family = AF_INET;
+	address.sin_addr.s_addr = INADDR_ANY;
+	address.sin_port = htons(get_port());
+	if (bind(fd_socket, (struct sockaddr *)&address, sizeof(address))<0)
+	{
+		perror("bind failed");
+		exit(EXIT_FAILURE);
+	}
+	if (listen(fd_socket, 3) < 0)
+	{
+		perror("listen");
+		exit(EXIT_FAILURE);
+	}
+	std::cout << "Created " << fd_socket <<  " For Port " << get_port() << std::endl;
 }
 
-int server_config::get_fd_socket()
+int server_config::longest_match(std::string str, std::string needle)
 {
-	return fd_socket;
+	size_t i = 0;
+	int last_match = 0;
+	int flag = 0;
+	while (i < needle.size() && i < str.size())
+	{
+		if (str[i] == '/')
+		{
+			if (flag == 1)
+				last_match = i;
+			else if (flag == 0)
+				last_match = i + 1;
+			flag = 1;
+		}
+		if (str[i] != needle[i])
+		{
+			if ((i - 1) >= 0 && str[i - 1] == '/')
+				return (i);
+			else
+				return last_match;
+		}
+		i++;
+	}
+	if ((i < str.size() && str[i] == '/') || (i < needle.size() && needle[i] == '/'))
+		return (i + 1);
+	else
+		return last_match;
+}
+
+location_config server_config::longest_prefix_match(std::string prefix)
+{
+	int best_match = -1;
+	int match = 0;
+	int index = 0;
+	for (size_t i = 0; i < this->locations.size(); i++)
+	{
+		location_config location = this->locations[i];
+		if (strcmp(location.get_prefix().c_str(), prefix.c_str()) == 0)
+			return location;
+		match = longest_match(location.get_prefix(), prefix);
+		if (match > best_match)
+		{
+			best_match = match;
+			index = i;
+		}
+	}
+	return (this->locations[index]);
 }

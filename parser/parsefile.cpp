@@ -146,9 +146,11 @@ void parsefile::fill_servers(std::ifstream &file)
 			else
 				throw std::runtime_error("duplicate body limit size in config file");
 		}
-		else if (line == "location=[")
+		else if (key == "location")
 		{
 			location_config location = fill_locations(file);
+			std::string chars("[");
+			location.set_prefix(Trim(value, chars));
 			server.add_location(location);
 		}
 		else
@@ -300,7 +302,8 @@ void parsefile::print_servers()
 		std::cout << " > Locations:" << std::endl;
 		for (size_t j = 0; j < _servers[i].get_locations().size(); j++)
 		{
-			std::cout << " > Location " << j + 1 << ":" << std::endl;
+			std::cout << "  > Location " << j + 1 << ":" << std::endl;
+			std::cout << "	- Prefix: " << _servers[i].get_locations()[j].get_prefix() << std::endl;
 			std::cout << "	- Methods: ";
 			for (size_t x = 0; x < _servers[i].get_locations()[j].get_methods().size(); x++)
 				std::cout << _servers[i].get_locations()[j].get_methods()[x] << " ";

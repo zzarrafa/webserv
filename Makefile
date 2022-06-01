@@ -1,11 +1,17 @@
 NAME = webserv
 
-SRCS = webserv.cpp tools/tools.cpp parser/parsefile.cpp parser/server.cpp parser/connection.cpp request.cpp
+SRCS =	webserv.cpp\
+		http/connection.cpp\
+		http/request.cpp\
+		http/response.cpp\
+		http/server.cpp\
+		parser/parsefile.cpp\
+		tools/tools.cpp\
 
 all: $(NAME)
 
 $(NAME): $(SRCS)
-		@c++ -std=c++98 -Wall -Wextra -Werror  -fsanitize=address -g $(SRCS) -o $(NAME)
+		@c++ -std=c++98 -Wall -Wextra -Werror -fsanitize=address -g $(SRCS) -o $(NAME)
 		
 clean:
 	@rm -rf $(NAME)

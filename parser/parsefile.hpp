@@ -1,14 +1,8 @@
 #ifndef PARSEFILE_HPP
 #define PARSEFILE_HPP
 
-#include <string>
-#include <vector>
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <algorithm>
-#include "server.hpp"
-#include "../tools/tools.hpp"
+#include "../webserv.hpp"
+#include "../http/server.hpp"
 
 class parsefile{
 	private:

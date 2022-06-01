@@ -1,5 +1,4 @@
 #include "webserv.hpp"
-#include "parser/connection.hpp"
 
 int main(int argc, char **argv)
 {
@@ -10,13 +9,14 @@ int main(int argc, char **argv)
             connection con;
             parsefile config(argv[1]);
             // config.print_servers();
+            // location_config location = config.get_servers()[0].longest_prefix_match("/Users/tools/");
+            // std::cout << location.get_prefix() << std::endl;
             // config.get_servers();
 
 
-            
             // socket that takes the config file instance
             // code here
-            std::cout << config.get_servers().size() << std::endl;
+            // std::cout << config.get_servers().size() << std::endl;
             con.chihaja(config);
         }
         else

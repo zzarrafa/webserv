@@ -1,21 +1,12 @@
 #ifndef SERVER_HPP
 #define SERVER_HPP
 
-#include <string>
-#include <vector>
-#include <iostream>
-#include <stdlib.h> 
-#include <errno.h> 
-#include <unistd.h>   
-#include <arpa/inet.h>    
-#include <sys/types.h> 
-#include <sys/socket.h> 
-#include <netinet/in.h> 
-#include <sys/time.h>
-#include <fcntl.h>
+# include "../webserv.hpp"
+
 class location_config
 {
 	private:
+		std::string					prefix;
 		std::vector<std::string>	methods;
 		std::vector<std::string>	redirect;
 		std::string					root;
@@ -37,13 +28,15 @@ class location_config
 		std::string					get_default_file();
 		std::string					get_cgi_path();
 		std::string					get_upload_path();
-		void set_redirect(std::vector<std::string> redirect);
-		void set_methods(std::vector<std::string> methods);
-		void set_root(std::string path);
-		void set_autoindex(std::string autoindex);
-		void set_default_file(std::string default_file);
-		void set_cgi_path(std::string cgi_path);
-		void set_upload_path(std::string upload_path);
+		std::string					get_prefix();
+		void 	set_redirect(std::vector<std::string> redirect);
+		void 	set_methods(std::vector<std::string> methods);
+		void 	set_root(std::string path);
+		void 	set_autoindex(std::string autoindex);
+		void 	set_default_file(std::string default_file);
+		void 	set_cgi_path(std::string cgi_path);
+		void 	set_upload_path(std::string upload_path);
+		void 	set_prefix(std::string prefix);
 };
 
 class server_config
@@ -78,6 +71,8 @@ class server_config
 		void add_location(location_config src);
 		void create_server();
 		int get_fd_socket();
+		location_config longest_prefix_match(std::string);
+		int longest_match(std::string str, std::string needle);
 };
 
 #endif

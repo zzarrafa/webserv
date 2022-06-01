@@ -1,4 +1,4 @@
-#include "response.hpp"
+#include "../webserv.hpp"
 
 
 WS::Response::Response()
@@ -9,8 +9,6 @@ WS::Response::~Response()
 {
     
 }
-
-
 
 void WS::Response::set_status_code(int status)
 {
@@ -62,7 +60,7 @@ bool WS::Response::isDir(std::string path)
 
 int WS::Response::search_for_path(server_config &s,std::string path)
 {
-    int i ,j;
+    size_t i;
     // std::map<int, server_config> mapserver;
     
 
@@ -98,7 +96,7 @@ void WS::Response::autoindex(std::string path)
 	
 
 
-    for(int i =0; i < file.size(); i++)
+    for(size_t i =0; i < file.size(); i++)
     {
         std::string td = "<tr><td width=\"50%\"> <a href=\"/"+ path + "/"+ file[i].file_name +"\"> "+file[i].file_name + "</a></td>"  ;
 			body += td;
@@ -181,7 +179,6 @@ void WS::Response::generate_errors()
 
 void WS::Response::delete_method(std::string filename)
 {
-    int status;
     std::remove(filename.c_str());
     if (errno == ENOENT)
         set_status_code(404);

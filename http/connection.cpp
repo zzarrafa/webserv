@@ -1,4 +1,14 @@
-#include "connection.hpp"
+#include "../webserv.hpp"
+
+void print_binary(char *s , int len)
+{
+	printf("=>[");
+	for(int i = 0; i < len; i++)
+	{
+		printf("%c", s[i]);
+	}
+	printf("]\n");
+}
 
 void connection::chihaja(parsefile s)
 {
@@ -73,31 +83,30 @@ void connection::chihaja(parsefile s)
 						else if (ret > 0)
 						{
 							std::ofstream file;
-							std::ifstream chunk;
-							std::string filename = "request" + std::to_string(fd) + ".txt";
-							file.open(filename);
-							file << buffer;
-							file.close();
+							// file.open("req.txt", std::ios_base::app);
+							// file << buffer;
+							// file.close();
 							if (chunking_map.find(fd) == chunking_map.end())
 							{
-								std::cout << "first time" << std::endl;
-								request	req(filename);
-								if (!req.get_is_complete())
+								request	req(buffer, ret);
+								if (req.get_is_complete())
+								{
+									FD_SET(fd, &copy_write);
+									FD_CLR(fd, &copy_read);
+								}
+								else
 									chunking_map.insert(std::make_pair(fd, req));
 							}
-							else if (chunking_map.find(fd) != chunking_map.end() && !chunking_map[fd].get_is_complete())
+							else if (chunking_map.find(fd) != chunking_map.end())
 							{
-
-								chunk.open(chunking_map[fd].get_body());
-								chunking_map[fd].parse_chunked_body(chunk);
-								chunking_map[fd].print_request();
-							}
-							if (chunking_map[fd].get_is_complete())
-							{
-								std::cout << "is over" << std::endl;
-								FD_SET(fd, &copy_write);
-								FD_CLR(fd, &copy_read);
-								chunking_map.erase(fd);
+								chunking_map[fd].fill_body(buffer, 2, ret);
+								if (chunking_map[fd].get_is_complete())
+								{
+									chunking_map[fd].print_request();
+									FD_SET(fd, &copy_write);
+									FD_CLR(fd, &copy_read);
+									chunking_map.erase(fd);
+								}
 							}
 						}
 						else if (ret == 0)
@@ -112,10 +121,6 @@ void connection::chihaja(parsefile s)
 					}
 					else
 					{
-						// response rep(server, req);
-						// char * = rep.get_header();
-						// map<int fd, >
-						// response_handler(); // returns a string
 						char *tello = (char *)("HTTP/1.1 200 OK\nContent-length: 17\n\r\nTello from server");
 						write(fd, tello, strlen(tello));
 						FD_CLR(fd, &copy_write);
