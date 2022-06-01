@@ -1,5 +1,5 @@
 .vscode
 *.dSYM
 *.out
-.tmp/*
+tmp/*
 webserv
