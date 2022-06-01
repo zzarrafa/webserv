@@ -22,5 +22,9 @@ std::string                 formatted_time(void);
 std::string                 get_file_type(std::string type);
 size_t      hex_to_int(std::string str);
 off_t       fsize(const char *filename);
+bool exists_test (const std::string& name);
+bool find_string(std::vector<std::string> vec, std::string str);
+std::string get_file_name(std::string path, std::string prefix);
+
 
 #endif

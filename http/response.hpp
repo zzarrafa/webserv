@@ -3,7 +3,7 @@
 
 # include "../webserv.hpp"
 
-namespace WS{
+
 class Response
 {
     private:
@@ -13,11 +13,16 @@ class Response
         std::string content_type;
         std::string body;
         std::string header;
+        std::string auto_index;
 
     public:
         Response();
         Response(server_config &server, request &req);
         ~Response();
+        // copy constructor
+        Response(const Response &r);
+        //assignment operator
+        Response &operator=(const Response &r);
 
         void    set_status_code(int status);
         void    set_content_lenght(int cl);
@@ -27,16 +32,21 @@ class Response
         int         get_content_lenght();
         std::string get_status();
         std::string get_content_type();
-        void writeToFd(int fd);
         bool isDir(std::string path);
         std::vector<std::string> getfiles();
-        void autoindex(std::string path);
+        void autoindex(std::string path, std::string prefix, std::string root);
         void get_method(server_config &s,std::string path);
-        void get_file(std::string file_name);
-        void generate_errors();
+        void generate_headers();
         void delete_method(std::string filename);
-        int search_for_path(server_config &s,std::string path);
+        // int search_for_path(server_config &s,std::string path);
+        std::string get_header();
+        void delete_method(server_config &s, std::string path);
+        std::string get_file_path(std::string path, std::string prefix);
+        int search_for_default(server_config &s,std::string path);
+        void get_file(std::string file_name);
+        // void post_method(server_config &s, request &req);
+        void    print_response();
 };
-}
+
 
 #endif

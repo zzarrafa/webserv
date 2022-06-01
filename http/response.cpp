@@ -1,50 +1,81 @@
-#include "../webserv.hpp"
+#include "response.hpp"
 
 
-WS::Response::Response()
+Response::Response()
 {
-
+    this->status_code = 200;
+    this->auto_index = "";
+    this->content_lenght = 0;
 }
-WS::Response::~Response()
+
+Response::~Response()
 {
     
 }
 
-void WS::Response::set_status_code(int status)
+//copy constructor
+Response::Response(const Response &src)
 {
+    this->status_code = src.status_code;
+    this->status = src.status;
+    this->content_lenght = src.content_lenght;
+    this->content_type = src.content_type;
+    this->body = src.body;
+    this->header = src.header;
+    this->status_code = src.status_code;
+
+}
+
+// assignment operator
+Response &Response::operator=(const Response &src)
+{
+    this->status_code = src.status_code;
+    this->status = src.status;
+    this->content_lenght = src.content_lenght;
+    this->content_type = src.content_type;
+    this->body = src.body;
+    this->header = src.header;
+    this->status_code = src.status_code;
+    return (*this);
+}
+
+
+void Response::set_status_code(int status)
+{
+    std::cout << "set_status_code" << std::endl;
     this->status_code = status;
 }
-void WS::Response::set_content_lenght(int cl)
+void Response::set_content_lenght(int cl)
 {
     this->content_lenght = cl;
 }
-void WS::Response::set_content_type(std::string ct)
+void Response::set_content_type(std::string ct)
 {
     this->content_type = ct;
 }
-void WS::Response::set_status(std::string status)
+void Response::set_status(std::string status)
 {
     this->status = status;
 }
-int WS::Response::get_status_code()
+int Response::get_status_code()
 {
     return status_code;
 }
-int WS::Response::get_content_lenght()
+int Response::get_content_lenght()
 {
     return content_lenght;
 }
-std::string WS::Response::get_content_type()
+std::string Response::get_content_type()
 {
     return content_type;
 }
-std::string WS::Response::get_status()
+std::string Response::get_status()
 {
     return status;
 }
 
 
-bool WS::Response::isDir(std::string path)
+bool Response::isDir(std::string path)
 {
     struct stat statbuf;
 	if (path == "/")
@@ -55,63 +86,82 @@ bool WS::Response::isDir(std::string path)
 	return S_ISDIR(statbuf.st_mode);
 }
 
-
-
-
-int WS::Response::search_for_path(server_config &s,std::string path)
+int Response::search_for_default(server_config &s,std::string path)
 {
-    size_t i;
-    // std::map<int, server_config> mapserver;
-    
-
-    // // std::vector<location_config> locations; = s->get_locations();
-    // for(j=0;j<s.get_servers().size(); j++)
-    //     for (i =0; i < s.get_servers()[j].get_locations().size() ; i++)
-    //     {
-    //          if (s.get_servers()[j].get_locations()[i].get_default_file() == path)
-    //         {
-    //              mapserver.insert(std::make_pair(i,s.get_servers()[j]));
-    //              return mapserver;
-    //         }
-    //     }
-    // mapserver.insert(std::make_pair(-1,s.get_servers()[0]));       
-    // return mapserver;
     std::vector<location_config> locations = s.get_locations();
-    
-        for (i =0; i < locations.size() ; i++)
-             if (locations[i].get_default_file() == path)
-                return i;
-
-
-           return -1;     
-
+    size_t i ;
+    std::string file_name;
+    for (i = 0; i < locations.size(); i++)
+    {
+        if (locations[i].get_prefix() == path)
+        {
+            file_name = locations[i].get_root() + locations[i].get_default_file();
+             if (!exists_test(file_name))
+    {
+                set_status_code(404);
+                return 1;
+    }
+            // print file name
+            std::cout << "file_name: " << file_name << std::endl;
+            get_file(file_name);
+            return 1;
+        }
+    }
+    return 0;
 }
 
 
-void WS::Response::autoindex(std::string path)
+// int Response::search_for_path(server_config &s,std::string path)
+// {
+//     size_t i;
+//     std::map<int,int> map;
+//     int max =0;
+//    path = "";
+//     std::vector<location_config> locations = s.get_locations();
+//     // for (i = 0; i < locations.size(); i++)
+//     //     map.insert(std::make_pair((common_characters(locations[i].get_prefix(), path)), i));
+    
+    
+//     std::map<int,int>::iterator it=map.begin();
+//     // iterate through the keys in map
+//     for (it=map.begin(); it!=map.end(); ++it)
+//     {
+//          if (it->first > max)
+//          {
+//              max = it->first;
+//          }
+//     }
+//     return map[max];  
+// }
+
+
+void Response::autoindex(std::string path, std::string prefix, std::string root)
 {
-    std::string header;
+    std::cout << "autoindex" << std::endl;
     std::vector<Fileinfos> file = listofFiles(path);
+    // print path
+    std::cout << "path to get files from: " << path << std::endl;
     std::string	body = "<html lang='en'>\n<head>\n<title>Document</title>\n</head>\n<body>\n<h1>Index OF "+ path + " </h1>\n<br>\n<table width=\"100%\">\n<hr>";
 	
-
-
+    this->auto_index = get_file_name(path, root);
+    //print prefix
+    std::cout << "New: " << this->auto_index << std::endl;
     for(size_t i =0; i < file.size(); i++)
     {
-        std::string td = "<tr><td width=\"50%\"> <a href=\"/"+ path + "/"+ file[i].file_name +"\"> "+file[i].file_name + "</a></td>"  ;
-			body += td;
-			if (file[i].file_name == ".." || file[i].file_name == ".")
-				continue;
-			td  = "<td width=\"25%\">"+ file[i].date + "</td>"  ;
-			body += td;
-			if (isDir( path + "/"+ file[i].file_name))
-				td = "<td width=\"25%\">"+ std::string("-") +"</td></tr>"  ;
-			else
-				td = "<td width=\"25%\">"+ (file[i].size)+"</td></tr>" ;
-			body += td;
+        // std::cout  << "THIS IS MY PATH " << path << std::endl;
+        std::string td = "<tr><td width=\"50%\"> <a href=\"" + prefix + this->auto_index + "/" + file[i].file_name +"\"> "+file[i].file_name + "</a></td>"  ;
+		body += td;
+		if (file[i].file_name == ".." || file[i].file_name == ".")
+			continue;
+		td  = "<td width=\"25%\">"+ file[i].date + "</td>"  ;
+		body += td;
+		if (isDir( path + "/"+ file[i].file_name))
+			td = "<td width=\"25%\">"+ std::string("-") +"</td></tr>"  ;
+		else
+			td = "<td width=\"25%\">"+ (file[i].size)+"</td></tr>" ;
+		body += td;
     }
     body +=  "</tbale></body></html>";
-
     header = "HTTP/1.1 200 Ok\r\n";
 	header += "Content-Type: text/html\r\n";
 	header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
@@ -122,7 +172,7 @@ void WS::Response::autoindex(std::string path)
 }
 
 
-void WS::Response::get_file(std::string file_name)
+void Response::get_file(std::string file_name)
 {
     std::ifstream f(file_name);
      if(f)
@@ -140,7 +190,7 @@ void WS::Response::get_file(std::string file_name)
 	header += "\r\n";
     header += body;
 }
-void WS::Response::generate_errors()
+void Response::generate_headers()
 {
     if (status_code == 404)
     {
@@ -175,58 +225,155 @@ void WS::Response::generate_errors()
 	    header += "\r\n";
         header += body;
     }
+    else if (status_code == 409)
+    {
+        body = "<html>\n<head><title>409 Conflict</title></head>\n<body bgcolor='white'>\n<center><h1>409 Conflict</h1></center>\n</body>\n</html>";
+        header = "HTTP/1.1 409 Conflict\r\n";
+	    header += "Content-Type: text/html\r\n";
+	    header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
+	    header += "Server: mywebserver\r\n";
+	    header += "Date: " + formatted_time() + "\r\n";
+	    header += "\r\n";
+        header += body;
+    }
+      else if (status_code == 201)
+    {
+        body = "<html>\n<head><title>201 Created</title></head>\n<body bgcolor='white'>\n<center><h1>201 Created</h1></center>\n</body>\n</html>";
+        header = "HTTP/1.1 201 Created\r\n";
+	    header += "Content-Type: text/html\r\n";
+	    header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
+	    header += "Server: mywebserver\r\n";
+	    header += "Date: " + formatted_time() + "\r\n";
+	    header += "\r\n";
+        header += body;
+    }
+      else if (status_code == 200)
+    {
+        body = "<html>\n<head><title>200 Ok</title></head>\n<body bgcolor='white'>\n<center><h1>200 Ok</h1></center>\n</body>\n</html>";
+        header = "HTTP/1.1 200 Ok\r\n";
+	    header += "Content-Type: text/html\r\n";
+	    header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
+	    header += "Server: mywebserver\r\n";
+	    header += "Date: " + formatted_time() + "\r\n";
+	    header += "\r\n";
+        header += body;
+    }
 }
 
-void WS::Response::delete_method(std::string filename)
+void Response::delete_method(server_config &s, std::string path)
 {
-    std::remove(filename.c_str());
+    std::string file_path;
+    location_config loc = s.longest_prefix_match(path);
+    const char *ptr = strrchr(path.c_str(), '/');
+    file_path = loc.get_root() + ptr;
+    
+    for (size_t i=0 ; i < loc.get_methods().size();i++)
+    {
+        std::cout << loc.get_methods()[i] << std::endl;
+    }
+    if (!find_string(loc.get_methods(),"DELETE"))
+    {
+        set_status_code(405);
+        return;
+    }
+    // printf("file path ++++ %s\n",file_path.c_str());
+    std::remove(file_path.c_str());
     if (errno == ENOENT)
         set_status_code(404);
     else
         set_status_code(200);
 }
 
-void WS::Response::get_method(server_config &s,std::string path)
+
+
+void Response::get_method(server_config &s,std::string path)
 {
-    int index = search_for_path(s, path);
-    std::vector<location_config> locations = s.get_locations();
-    if (index == -1)
-    { 
+    
+    if (search_for_default(s,path))
+        return;
+    
+    location_config loc = s.longest_prefix_match(path);
+    path = get_file_name(path, loc.get_prefix());
+    std::cout << "hh>>" << path << std::endl;
+    std::string file_name = loc.get_root() + path;
+    std::cout << "file name is " << file_name << "\n";
+    //print the file
+
+    if (isDir(file_name) && loc.get_autoindex() == "on")
+    {
+        autoindex(file_name, loc.get_prefix(), loc.get_root());
+        return;
+    }
+    if (!exists_test(file_name))
+    {
         set_status_code(404);
         return;
     }
-    std::string file_name = locations[index].get_root() + "/" + path;
-    std::vector<std::string>::iterator it;
-    it = std::find(locations[index].get_methods().begin(),locations[index].get_methods().end(),"GET") ;
-    if (it == locations[index].get_methods().end())
+    if (!find_string(loc.get_methods(),"GET"))
     {
         set_status_code(405);
         return;
     }
-    if (isDir(file_name) && locations[index].get_autoindex() == "of")
+    if (isDir(file_name) && loc.get_autoindex() == "off")
     {
         set_status_code(403);
-        return;
-    }
-    if (isDir(file_name) && locations[index].get_autoindex() == "on")
-    {
-        autoindex(file_name);
         return;
     }
     // 413
     get_file(file_name);
 }
 
-WS::Response::Response(server_config &server, request &req)
+// void Response::post_method(server_config &s, request &req)
+// {
+    // int index = search_for_path(s, req.get_path());
+    // if (index != -1)
+    //     set_status_code(409); // conflict
+    // else
+    // {
+    //     std::ofstream outfile (req.get_path());
+    //     outfile << req.get_body();
+    //     outfile.close();
+    //     set_status_code(201); //created
+
+        // std::string content;
+        // if (infile && outfile)
+        // for(int i=0; !infile.eof(); i++)     // get content of infile
+        // content += infile.get();
+        // infile.close();
+        // content.erase(content.end()-1);
+        // outfile << content;              
+        // outfile.close();
+
+
+    // }  
+// }
+std::string Response::get_header()
 {
+    return header;
+}
+
+Response::Response(server_config &server, request &req)
+{
+    // std::cout << server.get_locations()[0].get_root() << std::endl;
     if (req.get_method() == "GET")
     {
         get_method(server, req.get_path());
+        generate_headers();
     }
     else if (req.get_method() == "DELETE")
     {
+        delete_method(server ,req.get_path());
+        generate_headers();
     }
     else if (req.get_method() == "POST")
     {
+        generate_headers();
     }
+}
+
+
+//print response
+void Response::print_response()
+{
+    std::cout << header << std::endl;
 }

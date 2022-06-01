@@ -261,3 +261,25 @@ bool valid_hex(char c1, char c2)
 		return (true);
 	return (false);
 }
+bool exists_test (const std::string& name) {
+    std::ifstream f(name.c_str());
+    return f.good();
+}
+bool find_string(std::vector<std::string> vec, std::string str)
+{
+    for (size_t i = 0; i < vec.size(); i++)
+    {
+        if (vec[i] == str)
+            return true;
+    }
+    return false;
+}
+
+std::string get_file_name(std::string path, std::string prefix)
+{
+    std::cout << "path " << path << std::endl;
+    std::cout << "prefix " << prefix << std::endl;
+    char *buffer = strdup(path.c_str());
+    buffer += prefix.size();
+    return std::string(buffer); 
+}

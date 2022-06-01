@@ -13,6 +13,7 @@ void print_binary(char *s , int len)
 void connection::network_core(parsefile s)
 {
 	std::map<int, request> chunking_map;
+	std::map<int, request> serving_map;
 	std::map<int, server_config> fdServer_map;
 	std::map<int, server_config> fdClient_map;
 	std::vector<int> listOffd;
@@ -66,9 +67,10 @@ void connection::network_core(parsefile s)
 				}
 				else
 				{
+					server_config server = fdClient_map[fd];
 					if (FD_ISSET(fd, &readfds))
 					{
-						server_config server = fdClient_map[fd];
+						// server_config server = fdClient_map[fd];
 						int ret = read(fd, buffer, SIZE_OF_BUFFER);
 						if (ret == -1)
 						{
@@ -93,6 +95,7 @@ void connection::network_core(parsefile s)
 								{
 									FD_SET(fd, &copy_write);
 									FD_CLR(fd, &copy_read);
+									serving_map.insert(std::make_pair(fd, req));
 								}
 								else
 									chunking_map.insert(std::make_pair(fd, req));
@@ -105,6 +108,7 @@ void connection::network_core(parsefile s)
 									chunking_map[fd].print_request();
 									FD_SET(fd, &copy_write);
 									FD_CLR(fd, &copy_read);
+									serving_map.insert(std::make_pair(fd, chunking_map[fd]));
 									chunking_map.erase(fd);
 								}
 							}
@@ -121,9 +125,14 @@ void connection::network_core(parsefile s)
 					}
 					else
 					{
-						char *tello = (char *)("HTTP/1.1 200 OK\nContent-length: 17\n\r\nTello from server");
-						write(fd, tello, strlen(tello));
+
+						Response *rep = new Response(server, serving_map[fd]);
+						serving_map[fd].print_request();
+						// rep->print_response();
+						write(fd, rep->get_header().c_str(), rep->get_header().size());
 						FD_CLR(fd, &copy_write);
+						serving_map.erase(fd);
+						delete rep;
 						close(fd);
 					}
 				}
