@@ -17,7 +17,7 @@ int main(int argc, char **argv)
             // socket that takes the config file instance
             // code here
             // std::cout << config.get_servers().size() << std::endl;
-            con.chihaja(config);
+            con.network_core(config);
         }
         else
         {

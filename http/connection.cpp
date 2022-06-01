@@ -10,7 +10,7 @@ void print_binary(char *s , int len)
 	printf("]\n");
 }
 
-void connection::chihaja(parsefile s)
+void connection::network_core(parsefile s)
 {
 	std::map<int, request> chunking_map;
 	std::map<int, server_config> fdServer_map;

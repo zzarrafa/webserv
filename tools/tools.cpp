@@ -241,3 +241,23 @@ off_t fsize(const char *filename) {
         return st.st_size;
     return -1;
 }
+
+bool is_hex(char c)
+{
+	if (c >= '0' && c <= '9')
+		return (true);
+	if (c >= 'a' && c <= 'f')
+		return (true);
+	if (c >= 'A' && c <= 'F')
+		return (true);
+	return (false);
+}
+
+bool valid_hex(char c1, char c2)
+{
+	if (c1 == '0' && c2 == '\r')
+		return (true);
+	if (is_hex(c1) && is_hex(c1))
+		return (true);
+	return (false);
+}

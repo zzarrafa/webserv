@@ -266,12 +266,15 @@ int     request::read_hex(char *buffer, int *len)
 
 int     calculate_hex(char *buffer)
 {
+    std::cout << "hiho" << std::endl;
     int i = 0;
     while (buffer[i] != '\r' && buffer[i] != '\0')
-    {
-        std::cout << buffer[i] << std::endl;
         i++;
-    }
+    int j = 0;
+    std::cout << "Calculating hex: [";
+    while (j < i)
+        std::cout << buffer[j++];
+    std::cout << "]\n";
     return (i);
 }
 
@@ -281,11 +284,11 @@ char    *request::clean_buffer(char *buffer, int ret, int *counter)
     *counter = 0;
     while (i < ret)
     {
-        if (buffer[i] == '\r' && buffer[i + 1] == '\n')
+        if (buffer[i] == '\r' && i + 3 < ret && buffer[i + 1] == '\n' && valid_hex(buffer[i + 2], buffer[i + 3]) && isxdigit(buffer[i + 4]))
         {
             *counter += calculate_hex(buffer + i + 2);
-            std::cout << "first char: " << (buffer + i + 2)[0] << std::endl;
-            std::cout << "Counter: " << *counter << std::endl;
+            // std::cout << "first char: " << (buffer + i + 2)[0] << std::endl;
+            // std::cout << "Counter: " << *counter << std::endl;
             *counter += 4;
             i += *counter;
         }
@@ -299,7 +302,7 @@ char    *request::clean_buffer(char *buffer, int ret, int *counter)
     int j = 0;
     while (i < ret)
     {
-        if (buffer[i] == '\r' && buffer[i + 1] == '\n')
+        if (buffer[i] == '\r' && i + 3 < ret && buffer[i + 1] == '\n' && valid_hex(buffer[i + 2], buffer[i + 3]) && isxdigit(buffer[i + 4]))
         {
             std::cout << "Found CR LF" << std::endl;
             i += 2;
@@ -345,6 +348,6 @@ void    request::fill_body(char *buffer, int flag, int ret)
         fd = open(this->_body.c_str(), O_RDWR | O_APPEND, 0666);
         write(fd, new_buffer, ret - counter);
     }
-    if (ret < SIZE_OF_BUFFER)
+    if (ret < SIZE_OF_BUFFER && size_t(fsize(this->_body.c_str())) >= this->_length)
         this->_is_complete = true;
 }

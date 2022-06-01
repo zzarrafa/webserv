@@ -13,14 +13,14 @@ bool    is_method(std::string str);
 bool    is_ip(std::string str);
 bool    is_number(std::string str);
 bool    is_one_string(std::string str);
+bool    valid_hex(char c1, char c2);
 
-std::vector<std::string>    split(std::string str, char delim);
+std::vector<std::string> split(std::string str, char delim);
 std::vector<Fileinfos>      listofFiles(std::string path);
-
-std::string& Trim(std::string& str, std::string& chars);
-std::string	formatted_time(void);
-std::string     get_file_type(std::string type);
-size_t hex_to_int(std::string str);
-off_t fsize(const char *filename);
+std::string                 &Trim(std::string& str, std::string& chars);
+std::string                 formatted_time(void);
+std::string                 get_file_type(std::string type);
+size_t      hex_to_int(std::string str);
+off_t       fsize(const char *filename);
 
 #endif
