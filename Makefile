@@ -12,9 +12,12 @@ all: $(NAME)
 
 $(NAME): $(SRCS)
 		@c++ -std=c++98 -Wall -Wextra -Werror -fsanitize=address -g $(SRCS) -o $(NAME)
-		
+
 clean:
 	@rm -rf $(NAME)
+
+remove:
+	@rm -rf tmp/*
 
 fclean: clean
 

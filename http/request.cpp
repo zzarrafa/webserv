@@ -268,26 +268,32 @@ int     calculate_hex(char *buffer)
 {
     int i = 0;
     while (buffer[i] != '\r' && buffer[i] != '\0')
+    {
+        std::cout << buffer[i] << std::endl;
         i++;
+    }
     return (i);
 }
 
 char    *request::clean_buffer(char *buffer, int ret, int *counter)
 {
     int i = 0;
+    *counter = 0;
     while (i < ret)
     {
         if (buffer[i] == '\r' && buffer[i + 1] == '\n')
         {
             *counter += calculate_hex(buffer + i + 2);
+            std::cout << "first char: " << (buffer + i + 2)[0] << std::endl;
+            std::cout << "Counter: " << *counter << std::endl;
             *counter += 4;
             i += *counter;
         }
         i++;
     }
-    std::cout << "Counter: " << *counter << std::endl;
-    std::cout << "ret: " << ret << std::endl;
-    std::cout << "ret - counter: " << ret - *counter << std::endl;
+    // std::cout << "Counter: " << *counter << std::endl;
+    // std::cout << "ret: " << ret << std::endl;
+    // std::cout << "ret - counter: " << ret - *counter << std::endl;
     char *new_buffer = new char[ret - *counter];
     i = 0;
     int j = 0;
@@ -318,7 +324,7 @@ void    request::fill_body(char *buffer, int flag, int ret)
         std::string body("body");
         srand(time(NULL));
         body += std::to_string(rand());
-        this->_body = body;
+        this->_body = "tmp/" + body;
         fd = open(this->_body.c_str(), O_RDWR | O_CREAT | O_APPEND, 0666);
         if (this->_encoding == "chunked")
         {
