@@ -262,10 +262,11 @@ void Response::generate_headers()
 
 void Response::delete_method(server_config &s, std::string path)
 {
-    std::string file_path;
+    std::string file_name;
     location_config loc = s.longest_prefix_match(path);
-    const char *ptr = strrchr(path.c_str(), '/');
-    file_path = loc.get_root() + ptr;
+    path = get_file_name(path, loc.get_prefix());
+    file_name = loc.get_root() + path;
+    std::cout << "file name is " << file_name << "\n";
     
     for (size_t i=0 ; i < loc.get_methods().size();i++)
     {
@@ -277,7 +278,7 @@ void Response::delete_method(server_config &s, std::string path)
         return;
     }
     // printf("file path ++++ %s\n",file_path.c_str());
-    std::remove(file_path.c_str());
+    std::remove(file_name.c_str());
     if (errno == ENOENT)
         set_status_code(404);
     else
@@ -294,7 +295,6 @@ void Response::get_method(server_config &s,std::string path)
     
     location_config loc = s.longest_prefix_match(path);
     path = get_file_name(path, loc.get_prefix());
-    std::cout << "hh>>" << path << std::endl;
     std::string file_name = loc.get_root() + path;
     std::cout << "file name is " << file_name << "\n";
     //print the file
