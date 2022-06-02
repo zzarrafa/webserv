@@ -1,6 +1,5 @@
 #include "response.hpp"
 
-
 Response::Response()
 {
     this->status_code = 200;
@@ -10,7 +9,7 @@ Response::Response()
 
 Response::~Response()
 {
-    
+
 }
 
 //copy constructor
@@ -24,6 +23,16 @@ Response::Response(const Response &src)
     this->header = src.header;
     this->status_code = src.status_code;
 
+}
+
+void Response::print_response()
+{
+    std::cout << "> Status code: " << this->status_code << std::endl;
+    std::cout << "> Status: " << this->status << std::endl;
+    std::cout << "> Content lenght: " << this->content_lenght << std::endl;
+    std::cout << "> Content type: " << this->content_type << std::endl;
+    std::cout << "> Body: " << this->body << std::endl;
+    std::cout << "> Header: " << this->header << std::endl;
 }
 
 // assignment operator
@@ -42,7 +51,6 @@ Response &Response::operator=(const Response &src)
 
 void Response::set_status_code(int status)
 {
-    std::cout << "set_status_code" << std::endl;
     this->status_code = status;
 }
 void Response::set_content_lenght(int cl)
@@ -74,13 +82,17 @@ std::string Response::get_status()
     return status;
 }
 
+std::string Response::get_header()
+{
+    return header;
+}
 
 bool Response::isDir(std::string path)
 {
     struct stat statbuf;
 	if (path == "/")
 		return true;
-	std::string s = path; 
+	std::string s = path;
 	if (stat(s.c_str(), &statbuf) != 0)
 		return 0;
 	return S_ISDIR(statbuf.st_mode);
@@ -96,13 +108,11 @@ int Response::search_for_default(server_config &s,std::string path)
         if (locations[i].get_prefix() == path)
         {
             file_name = locations[i].get_root() + locations[i].get_default_file();
-             if (!exists_test(file_name))
-    {
+            if (!exists_test(file_name))
+            {
                 set_status_code(404);
                 return 1;
-    }
-            // print file name
-            std::cout << "file_name: " << file_name << std::endl;
+            }
             get_file(file_name);
             return 1;
         }
@@ -110,45 +120,13 @@ int Response::search_for_default(server_config &s,std::string path)
     return 0;
 }
 
-
-// int Response::search_for_path(server_config &s,std::string path)
-// {
-//     size_t i;
-//     std::map<int,int> map;
-//     int max =0;
-//    path = "";
-//     std::vector<location_config> locations = s.get_locations();
-//     // for (i = 0; i < locations.size(); i++)
-//     //     map.insert(std::make_pair((common_characters(locations[i].get_prefix(), path)), i));
-    
-    
-//     std::map<int,int>::iterator it=map.begin();
-//     // iterate through the keys in map
-//     for (it=map.begin(); it!=map.end(); ++it)
-//     {
-//          if (it->first > max)
-//          {
-//              max = it->first;
-//          }
-//     }
-//     return map[max];  
-// }
-
-
 void Response::autoindex(std::string path, std::string prefix, std::string root)
 {
-    std::cout << "autoindex" << std::endl;
     std::vector<Fileinfos> file = listofFiles(path);
-    // print path
-    std::cout << "path to get files from: " << path << std::endl;
     std::string	body = "<html lang='en'>\n<head>\n<title>Document</title>\n</head>\n<body>\n<h1>Index OF "+ path + " </h1>\n<br>\n<table width=\"100%\">\n<hr>";
-	
     this->auto_index = get_file_name(path, root);
-    //print prefix
-    std::cout << "New: " << this->auto_index << std::endl;
     for(size_t i =0; i < file.size(); i++)
     {
-        // std::cout  << "THIS IS MY PATH " << path << std::endl;
         std::string td = "<tr><td width=\"50%\"> <a href=\"" + prefix + this->auto_index + "/" + file[i].file_name +"\"> "+file[i].file_name + "</a></td>"  ;
 		body += td;
 		if (file[i].file_name == ".." || file[i].file_name == ".")
@@ -171,7 +149,6 @@ void Response::autoindex(std::string path, std::string prefix, std::string root)
 	header += body;
 }
 
-
 void Response::get_file(std::string file_name)
 {
     std::ifstream f(file_name);
@@ -181,7 +158,6 @@ void Response::get_file(std::string file_name)
         ss << f.rdbuf();
         body = ss.str();  // the contenant of the file in the body / check the contenant lenght and the extention
     }
-    // the header 
     header = "HTTP/1.1 200 ok\r\n";
 	header += "Content-Type: " + get_file_type(file_name) + "\r\n";
 	header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
@@ -190,6 +166,7 @@ void Response::get_file(std::string file_name)
 	header += "\r\n";
     header += body;
 }
+
 void Response::generate_headers()
 {
     if (status_code == 404)
@@ -216,7 +193,7 @@ void Response::generate_headers()
     }
     else if ( status_code == 403)
     {
-          body = "<html>\n<head><title>403 Forbidden</title></head>\n<body bgcolor='white'>\n<center><h1>403 Forbidden</h1></center>\n</body>\n</html>";
+        body = "<html>\n<head><title>403 Forbidden</title></head>\n<body bgcolor='white'>\n<center><h1>403 Forbidden</h1></center>\n</body>\n</html>";
         header = "HTTP/1.1 403 Forbidden\r\n";
 	    header += "Content-Type: text/html\r\n";
 	    header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
@@ -236,7 +213,7 @@ void Response::generate_headers()
 	    header += "\r\n";
         header += body;
     }
-      else if (status_code == 201)
+    else if (status_code == 201)
     {
         body = "<html>\n<head><title>201 Created</title></head>\n<body bgcolor='white'>\n<center><h1>201 Created</h1></center>\n</body>\n</html>";
         header = "HTTP/1.1 201 Created\r\n";
@@ -247,7 +224,7 @@ void Response::generate_headers()
 	    header += "\r\n";
         header += body;
     }
-      else if (status_code == 200)
+    else if (status_code == 200)
     {
         body = "<html>\n<head><title>200 Ok</title></head>\n<body bgcolor='white'>\n<center><h1>200 Ok</h1></center>\n</body>\n</html>";
         header = "HTTP/1.1 200 Ok\r\n";
@@ -266,8 +243,6 @@ void Response::delete_method(server_config &s, std::string path)
     location_config loc = s.longest_prefix_match(path);
     path = get_file_name(path, loc.get_prefix());
     file_name = loc.get_root() + path;
-    std::cout << "file name is " << file_name << "\n";
-    
     for (size_t i=0 ; i < loc.get_methods().size();i++)
     {
         std::cout << loc.get_methods()[i] << std::endl;
@@ -277,7 +252,6 @@ void Response::delete_method(server_config &s, std::string path)
         set_status_code(405);
         return;
     }
-    // printf("file path ++++ %s\n",file_path.c_str());
     std::remove(file_name.c_str());
     if (errno == ENOENT)
         set_status_code(404);
@@ -285,20 +259,13 @@ void Response::delete_method(server_config &s, std::string path)
         set_status_code(200);
 }
 
-
-
 void Response::get_method(server_config &s,std::string path)
 {
-    
     if (search_for_default(s,path))
         return;
-    
     location_config loc = s.longest_prefix_match(path);
     path = get_file_name(path, loc.get_prefix());
     std::string file_name = loc.get_root() + path;
-    std::cout << "file name is " << file_name << "\n";
-    //print the file
-
     if (isDir(file_name) && loc.get_autoindex() == "on")
     {
         autoindex(file_name, loc.get_prefix(), loc.get_root());
@@ -341,16 +308,12 @@ void Response::get_method(server_config &s,std::string path)
         // content += infile.get();
         // infile.close();
         // content.erase(content.end()-1);
-        // outfile << content;              
+        // outfile << content;
         // outfile.close();
 
 
-    // }  
+    // }
 // }
-std::string Response::get_header()
-{
-    return header;
-}
 
 Response::Response(server_config &server, request &req)
 {
@@ -369,11 +332,4 @@ Response::Response(server_config &server, request &req)
     {
         generate_headers();
     }
-}
-
-
-//print response
-void Response::print_response()
-{
-    std::cout << header << std::endl;
 }

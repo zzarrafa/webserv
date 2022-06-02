@@ -19,7 +19,7 @@ clean:
 remove:
 	@rm -rf tmp/*
 
-fclean: clean
+fclean: clean remove
 
 start: $(NAME)
 	@./$(NAME) config.conf

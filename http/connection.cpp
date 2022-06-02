@@ -12,10 +12,10 @@ void print_binary(char *s , int len)
 
 void connection::network_core(parsefile s)
 {
-	std::map<int, request> chunking_map;
-	std::map<int, request> serving_map;
-	std::map<int, server_config> fdServer_map;
-	std::map<int, server_config> fdClient_map;
+	std::map<int, request>			chunking_map;
+	std::map<int, request>			serving_map;
+	std::map<int, server_config>	fdServer_map;
+	std::map<int, server_config>	fdClient_map;
 	std::vector<int> listOffd;
 	int activity;
 	int new_socket;
@@ -70,7 +70,6 @@ void connection::network_core(parsefile s)
 					server_config server = fdClient_map[fd];
 					if (FD_ISSET(fd, &readfds))
 					{
-						// server_config server = fdClient_map[fd];
 						int ret = read(fd, buffer, SIZE_OF_BUFFER);
 						if (ret == -1)
 						{
@@ -84,10 +83,6 @@ void connection::network_core(parsefile s)
 						}
 						else if (ret > 0)
 						{
-							std::ofstream file;
-							// file.open("req.txt", std::ios_base::app);
-							// file << buffer;
-							// file.close();
 							if (chunking_map.find(fd) == chunking_map.end())
 							{
 								request	req(buffer, ret);
@@ -125,7 +120,6 @@ void connection::network_core(parsefile s)
 					}
 					else
 					{
-
 						Response *rep = new Response(server, serving_map[fd]);
 						serving_map[fd].print_request();
 						// rep->print_response();
