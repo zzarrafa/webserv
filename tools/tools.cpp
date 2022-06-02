@@ -277,9 +277,5 @@ bool find_string(std::vector<std::string> vec, std::string str)
 
 std::string get_file_name(std::string path, std::string prefix)
 {
-    std::cout << "path " << path << std::endl;
-    std::cout << "prefix " << prefix << std::endl;
-    char *buffer = strdup(path.c_str());
-    buffer += prefix.size();
-    return std::string(buffer); 
+	return std::string((strdup(path.c_str()) + prefix.size()));
 }

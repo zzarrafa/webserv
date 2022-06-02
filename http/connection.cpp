@@ -13,10 +13,10 @@ void print_binary(char *s , int len)
 
 void connection::network_core(parsefile s)
 {
-	std::map<int, request> chunking_map;
-	std::map<int, request> serving_map;
-	std::map<int, server_config> fdServer_map;
-	std::map<int, server_config> fdClient_map;
+	std::map<int, request>			chunking_map;
+	std::map<int, request>			serving_map;
+	std::map<int, server_config>	fdServer_map;
+	std::map<int, server_config>	fdClient_map;
 	std::vector<int> listOffd;
 	int activity;
 	int new_socket;
