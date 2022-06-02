@@ -19,6 +19,11 @@ parsefile::parsefile(const parsefile &src)
 	this->_servers = src._servers;
 }
 
+std::vector<server_config> &parsefile::get_servers()
+{
+	return(_servers);
+}
+
 bool parsefile::is_empty(std::string file_name)
 {
 	std::string line;
@@ -80,6 +85,7 @@ void parsefile::fill_servers(std::ifstream &file)
 		if (line.find("}") != std::string::npos)
 		{
 			_servers.push_back(server);
+			// _ports.insert(server.get_port());
 			// check for missing attributes
 			return ;
 		}
@@ -281,11 +287,6 @@ location_config parsefile::fill_locations(std::ifstream &file)
 			throw std::runtime_error("Invalid syntax in config file");
 	}
 	return (location);
-}
-
-std::vector<server_config> &parsefile::get_servers()
-{
-	return(_servers);
 }
 
 void parsefile::print_servers()

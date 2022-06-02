@@ -278,13 +278,13 @@ void Response::delete_method(server_config &s, std::string path)
         return;
     }
     // printf("file path ++++ %s\n",file_path.c_str());
-    std::remove(file_name.c_str());
-    if (errno == ENOENT)
+    if (std::remove(file_name.c_str()))
         set_status_code(404);
     else
         set_status_code(200);
 }
 
+// function to create a directory
 
 
 void Response::get_method(server_config &s,std::string path)
@@ -367,7 +367,8 @@ Response::Response(server_config &server, request &req)
     }
     else if (req.get_method() == "POST")
     {
-        generate_headers();
+        std::cout << "post method\n";
+        // generate_headers();
     }
 }
 

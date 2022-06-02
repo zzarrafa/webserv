@@ -239,7 +239,7 @@ void server_config::add_location(location_config location)
 
 void server_config::create_server()
 {
-	int opt =1;
+	int opt = 1;
 	struct sockaddr_in address;
 	if( (fd_socket = socket(AF_INET , SOCK_STREAM , 0)) == 0)
 	{
@@ -317,3 +317,5 @@ location_config server_config::longest_prefix_match(std::string prefix)
 	}
 	return (this->locations[index]);
 }
+
+

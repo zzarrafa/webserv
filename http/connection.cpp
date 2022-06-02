@@ -1,4 +1,5 @@
 #include "../webserv.hpp"
+#include  <set>
 
 void print_binary(char *s , int len)
 {
@@ -24,9 +25,11 @@ void connection::network_core(parsefile s)
 	fd_set readfds;
 	int max = 0;
 
+	FD_ZERO(&readfds);
+	FD_ZERO(&writefds);
+	
 	for (unsigned long i = 0; i < s.get_servers().size(); i++)
 		s.get_servers()[i].create_server();
-	FD_ZERO(&readfds);
 	for (unsigned long i = 0; i < s.get_servers().size(); i++)
 	{
 		std::cout << "==>" << s.get_servers()[i].get_fd_socket() << std::endl;
@@ -38,8 +41,7 @@ void connection::network_core(parsefile s)
 	}
 
 	fd_set copy_read = readfds;
-	fd_set copy_write = readfds;
-	FD_ZERO(&writefds);
+	fd_set copy_write = writefds;
 	while (true)
 	{
 		readfds = copy_read;
@@ -53,12 +55,9 @@ void connection::network_core(parsefile s)
 			{
 				if (std::count(listOffd.begin(), listOffd.end(), fd))
 				{
-					struct sockaddr_in add;
-					int c;
-					new_socket = accept(fd, (struct sockaddr *)&add, (socklen_t *)&c);
+					new_socket = accept(fd, NULL, NULL);
 					fcntl(new_socket, F_SETFL, O_NONBLOCK);
 					FD_SET(new_socket, &copy_read);
-					std::cout << new_socket << std::endl;
 					serv = fdServer_map.find(fd)->second;
 					fdClient_map.insert(std::make_pair(new_socket, serv));
 					if (new_socket > max)
@@ -70,7 +69,6 @@ void connection::network_core(parsefile s)
 					server_config server = fdClient_map[fd];
 					if (FD_ISSET(fd, &readfds))
 					{
-						// server_config server = fdClient_map[fd];
 						int ret = read(fd, buffer, SIZE_OF_BUFFER);
 						if (ret == -1)
 						{
@@ -84,15 +82,12 @@ void connection::network_core(parsefile s)
 						}
 						else if (ret > 0)
 						{
-							std::ofstream file;
-							// file.open("req.txt", std::ios_base::app);
-							// file << buffer;
-							// file.close();
 							if (chunking_map.find(fd) == chunking_map.end())
 							{
 								request	req(buffer, ret);
 								if (req.get_is_complete())
 								{
+									std::cout<<"complete\n";
 									FD_SET(fd, &copy_write);
 									FD_CLR(fd, &copy_read);
 									serving_map.insert(std::make_pair(fd, req));
@@ -102,9 +97,11 @@ void connection::network_core(parsefile s)
 							}
 							else if (chunking_map.find(fd) != chunking_map.end())
 							{
+								std::cout<<"complete chunked\n";
 								chunking_map[fd].fill_body(buffer, 2, ret);
 								if (chunking_map[fd].get_is_complete())
 								{
+									
 									chunking_map[fd].print_request();
 									FD_SET(fd, &copy_write);
 									FD_CLR(fd, &copy_read);
@@ -125,10 +122,7 @@ void connection::network_core(parsefile s)
 					}
 					else
 					{
-
 						Response *rep = new Response(server, serving_map[fd]);
-						serving_map[fd].print_request();
-						// rep->print_response();
 						write(fd, rep->get_header().c_str(), rep->get_header().size());
 						FD_CLR(fd, &copy_write);
 						serving_map.erase(fd);

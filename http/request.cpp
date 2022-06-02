@@ -24,7 +24,6 @@ request::request(const request &src)
     this->_offset = src._offset;
     this->_headers_len = src._headers_len;
     this->_headers = src._headers;
-
 }
 
 request &request::operator=(const request &src)
@@ -171,16 +170,14 @@ void request::add_headers(std::string key, std::string value)
 
 void request::check_if_complete()
 {
-    std::cout << "Checking if request is complete" << std::endl;
     if (this->_method == "GET" || this->_method == "DELETE")
     {
-        std::cout << "Request is complete 1111" << std::endl;
+        std::cout << "> Request is complete" << std::endl;
         this->_is_complete = true;
     }
     if (this->_length == (size_t)fsize(this->_body.c_str()))
     {
         this->_is_complete = true;
-        std::cout << "Request is complete" << std::endl;
     }
 }
 
@@ -241,8 +238,10 @@ request::request(char *buffer, int ret)
             }
         }
     }
-    fill_body(buffer + this->_offset, 1, ret);
     this->check_if_complete();
+    if (this->_is_complete)
+        return ;
+    fill_body(buffer + this->_offset, 1, ret);
 }
 
 int     request::find_char(char *buffer, char c)
@@ -287,16 +286,11 @@ char    *request::clean_buffer(char *buffer, int ret, int *counter)
         if (buffer[i] == '\r' && i + 3 < ret && buffer[i + 1] == '\n' && valid_hex(buffer[i + 2], buffer[i + 3]) && isxdigit(buffer[i + 4]))
         {
             *counter += calculate_hex(buffer + i + 2);
-            // std::cout << "first char: " << (buffer + i + 2)[0] << std::endl;
-            // std::cout << "Counter: " << *counter << std::endl;
             *counter += 4;
             i += *counter;
         }
         i++;
     }
-    // std::cout << "Counter: " << *counter << std::endl;
-    // std::cout << "ret: " << ret << std::endl;
-    // std::cout << "ret - counter: " << ret - *counter << std::endl;
     char *new_buffer = new char[ret - *counter];
     i = 0;
     int j = 0;
@@ -310,12 +304,11 @@ char    *request::clean_buffer(char *buffer, int ret, int *counter)
             i += 2;
         }
         else
-        {
             new_buffer[j++] = buffer[i++];
-        }
     }
     return (new_buffer);
 }
+
 
 void    request::fill_body(char *buffer, int flag, int ret)
 {
@@ -339,6 +332,7 @@ void    request::fill_body(char *buffer, int flag, int ret)
         }
         else
             write(fd, buffer, this->_length);
+        close(fd);
     }
     else if (flag == 2)
     {
@@ -347,6 +341,7 @@ void    request::fill_body(char *buffer, int flag, int ret)
         char *new_buffer = clean_buffer(buffer, ret, &counter);
         fd = open(this->_body.c_str(), O_RDWR | O_APPEND, 0666);
         write(fd, new_buffer, ret - counter);
+        close(fd);
     }
     if (ret < SIZE_OF_BUFFER && size_t(fsize(this->_body.c_str())) >= this->_length)
         this->_is_complete = true;
