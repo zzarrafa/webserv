@@ -1,0 +1,24 @@
+==15144==ERROR: AddressSanitizer: heap-buffer-overflow on address 0x602000000232 at pc 0x000101fd15ae bp 0x7ffeedd9e030 sp 0x7ffeedd9d7d8
+READ of size 1 at 0x602000000232 thread T0
+    #0 0x101fd15ad in wrap_strlen (libclang_rt.asan_osx_dynamic.dylib:x86_64h+0x185ad)
+    #1 0x101e5db74 in std::__1::char_traits<char>::length(char const*) __string:218
+    #2 0x101eee0d0 in std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string<std::__1::nullptr_t>(char const*) string:820
+    #3 0x101ee1d9c in std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >::basic_string<std::__1::nullptr_t>(char const*) string:818
+    #4 0x101ee5df6 in get_file_name(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >) tools.cpp:280
+    #5 0x101eae433 in Response::get_method(server_config&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >) response.cpp:270
+    #6 0x101eaf21c in Response::Response(server_config&, request&) response.cpp:326
+    #7 0x101eaf6c4 in Response::Response(server_config&, request&) response.cpp:322
+    #8 0x101e63bf3 in connection::network_core(parsefile) connection.cpp:125
+    #9 0x101e5d385 in main webserv.cpp:20
+    #10 0x7fff621673d4 in start (libdyld.dylib:x86_64+0x163d4)
+
+0x602000000232 is located 0 bytes to the right of 2-byte region [0x602000000230,0x602000000232)
+allocated by thread T0 here:
+    #0 0x10201486f in wrap_strdup (libclang_rt.asan_osx_dynamic.dylib:x86_64h+0x5b86f)
+    #1 0x101ee5dd6 in get_file_name(std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >) tools.cpp:280
+    #2 0x101eae433 in Response::get_method(server_config&, std::__1::basic_string<char, std::__1::char_traits<char>, std::__1::allocator<char> >) response.cpp:270
+    #3 0x101eaf21c in Response::Response(server_config&, request&) response.cpp:326
+    #4 0x101eaf6c4 in Response::Response(server_config&, request&) response.cpp:322
+    #5 0x101e63bf3 in connection::network_core(parsefile) connection.cpp:125
+    #6 0x101e5d385 in main webserv.cpp:20
+    #7 0x7fff621673d4 in start (libdyld.dylib:x86_64+0x163d4)
