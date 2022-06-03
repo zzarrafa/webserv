@@ -24,6 +24,61 @@ bool is_method(std::string str)
 	return (false);
 }
 
+std::vector<server_config> get_servers_with_same_port(parsefile &pf, int port)
+{
+	std::vector<server_config> vec;
+	for (size_t i = 0 ; i < pf.get_servers().size() ; i++)
+	{
+		// std::cerr << i << std::endl;
+		if (pf.get_servers()[i].get_port() == port)
+		{
+			// std::cerr << "port : " << port << std::endl;
+			// std::cerr << "server : " << pf.get_servers()[i].get_port() << std::endl;
+			vec.push_back(pf.get_servers()[i]);
+		}
+	}
+	// for (size_t i = 0; i < vec.size(); i++)
+	// {
+	// 	std::cout << "server" << i << ">" << std::endl;
+	// 	// vec[i].print_server();
+	// }
+	// std::cout << "vec size: " << vec.size() << std::endl;
+	return (vec);
+}
+
+int create_server(int port)
+{
+	int opt = 1;
+	struct sockaddr_in address;
+	int fd_socket;
+	if( (fd_socket = socket(AF_INET , SOCK_STREAM , 0)) == 0)
+	{
+		perror("socket failed");
+		exit(EXIT_FAILURE);
+	}
+	fcntl(fd_socket, F_SETFL, O_NONBLOCK);
+	if( setsockopt(fd_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0 )
+	{
+		perror("setsockopt");
+		exit(EXIT_FAILURE);
+	}
+	address.sin_family = AF_INET;
+	address.sin_addr.s_addr = INADDR_ANY;
+	address.sin_port = htons(port);
+	if (bind(fd_socket, (struct sockaddr *)&address, sizeof(address))<0)
+	{
+		perror("bind failed");
+		exit(EXIT_FAILURE);
+	}
+	if (listen(fd_socket, 3) < 0)
+	{
+		perror("listen");
+		exit(EXIT_FAILURE);
+	}
+	std::cout << "Created " << fd_socket <<  " For Port " << port << std::endl;
+	return (fd_socket);
+}
+
 bool is_ip(std::string str)
 {
 	int i = 0;
@@ -86,8 +141,10 @@ bool is_one_string(std::string str)
 std::string   split_file_path(std::string type)
 {
 	const char *ok;
-
+	// to protect against nullptrb in return
     ok = strrchr(type.c_str(), '.');
+	if (!ok)
+		return ("");
 	std::string res(ok);
 	return res;
 }
@@ -261,10 +318,25 @@ bool valid_hex(char c1, char c2)
 		return (true);
 	return (false);
 }
+
 bool exists_test (const std::string& name) {
     std::ifstream f(name.c_str());
     return f.good();
 }
+
+// find srting position in vector
+int find_string_position(std::vector<std::string> vec, std::string str)
+{
+	int i = 0;
+	for (std::vector<std::string>::iterator it = vec.begin(); it != vec.end(); ++it)
+	{
+		if (*it == str)
+			return (i);
+		i++;
+	}
+	return (-1);
+}
+
 bool find_string(std::vector<std::string> vec, std::string str)
 {
     for (size_t i = 0; i < vec.size(); i++)
@@ -278,4 +350,17 @@ bool find_string(std::vector<std::string> vec, std::string str)
 std::string get_file_name(std::string path, std::string prefix)
 {
 	return std::string((strdup(path.c_str()) + prefix.size()));
+}
+
+std::map<int, int> switch_map(std::map<int, int> map)
+{
+	std::map<int, int>	new_map;
+	std::map<int, int>::iterator it = map.begin();
+
+	while (it != map.end())
+	{
+		new_map.insert(std::pair<int, int>(it->second, it->first));
+		it++;
+	}
+	return (new_map);
 }

@@ -11,17 +11,29 @@ parsefile::~parsefile()
 parsefile &parsefile::operator=(const parsefile &src)
 {
 	this->_servers = src._servers;
+	this->_ports = src._ports;
 	return (*this);
 }
 
 parsefile::parsefile(const parsefile &src)
 {
 	this->_servers = src._servers;
+	this->_ports = src._ports;
 }
 
 std::vector<server_config> &parsefile::get_servers()
 {
 	return(_servers);
+}
+
+std::map<int, int> &parsefile::get_ports()
+{
+	return (_ports);
+}
+
+void parsefile::set_ports(std::map<int, int> ports)
+{
+	_ports = ports;
 }
 
 bool parsefile::is_empty(std::string file_name)
@@ -85,8 +97,8 @@ void parsefile::fill_servers(std::ifstream &file)
 		if (line.find("}") != std::string::npos)
 		{
 			_servers.push_back(server);
-			// _ports.insert(server.get_port());
-			// check for missing attributes
+			_ports.insert(std::make_pair(server.get_port(), 0));
+			// std::cout << "server: " << server.get_host() << ":" << server.get_port() << std::endl;
 			return ;
 		}
 		if ((i = line.find("=")) == std::string::npos)

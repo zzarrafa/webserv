@@ -58,7 +58,7 @@ void request::print_request()
     std::cout << "> Is complete: " << this->_is_complete << std::endl;
     // std::cout << "• Rest of the Headers: " << std::endl;
     // for (auto std::map<std::string, std::string>::iterator it = this->_headers.begin(); it != this->_headers.end(); ++it)
-        // std::cout << "  - " << it->first << ": " << it->second << std::endl;
+    //     std::cout << "  - " << it->first << ": " << it->second << std::endl;
     std::cout << "Body file size: " << fsize(this->_body.c_str()) << std::endl;
     std::cout << "• Body file name: " << this->_body << std::endl;
 }
@@ -172,7 +172,7 @@ void request::check_if_complete()
 {
     if (this->_method == "GET" || this->_method == "DELETE")
     {
-        std::cout << "> Request is complete" << std::endl;
+        // std::cout << "> Request is complete" << std::endl;
         this->_is_complete = true;
     }
     if (this->_length == (size_t)fsize(this->_body.c_str()))

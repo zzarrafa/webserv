@@ -17,7 +17,7 @@ class Response
 
     public:
         Response();
-        Response(server_config &server, request &req);
+        Response(server_config server, request &req);
         ~Response();
         // copy constructor
         Response(const Response &r);

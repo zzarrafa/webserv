@@ -237,37 +237,6 @@ void server_config::add_location(location_config location)
 	this->locations.push_back(location);
 }
 
-void server_config::create_server()
-{
-	int opt = 1;
-	struct sockaddr_in address;
-	if( (fd_socket = socket(AF_INET , SOCK_STREAM , 0)) == 0)
-	{
-		perror("socket failed");
-		exit(EXIT_FAILURE);
-	}
-	fcntl(fd_socket, F_SETFL, O_NONBLOCK);
-	if( setsockopt(fd_socket, SOL_SOCKET, SO_REUSEADDR, (char *)&opt, sizeof(opt)) < 0 )
-	{
-		perror("setsockopt");
-		exit(EXIT_FAILURE);
-	}
-	address.sin_family = AF_INET;
-	address.sin_addr.s_addr = INADDR_ANY;
-	address.sin_port = htons(get_port());
-	if (bind(fd_socket, (struct sockaddr *)&address, sizeof(address))<0)
-	{
-		perror("bind failed");
-		exit(EXIT_FAILURE);
-	}
-	if (listen(fd_socket, 3) < 0)
-	{
-		perror("listen");
-		exit(EXIT_FAILURE);
-	}
-	std::cout << "Created " << fd_socket <<  " For Port " << get_port() << std::endl;
-}
-
 int server_config::longest_match(std::string str, std::string needle)
 {
 	size_t i = 0;
@@ -319,3 +288,42 @@ location_config server_config::longest_prefix_match(std::string prefix)
 }
 
 
+
+server_config get_server_by_host(std::vector<server_config> servers, std::string host)
+{
+	std::string host_name(split(host, ':')[0]);
+	std::cout << "host: " << host << std::endl;
+	std::cout << "host_name: " << host_name << std::endl;
+	std::cout << "size: " << servers.size() << std::endl;
+	if (is_ip(host_name))
+	{
+			std::cout << "is ip" << std::endl;
+		for (size_t i = 0; i < servers.size(); i++)
+		{
+			server_config server = servers[i];
+			if (strcmp(server.get_host().c_str(), host_name.c_str()) == 0)
+				return server;
+		}
+	}
+	else
+	{
+		for (size_t i = 0; i < servers.size(); i++)
+		{
+			if (find_string(servers[i].get_servers(), host))
+				return servers[i];
+		}
+	}
+	return (server_config());
+}
+
+//print server
+void server_config::print_server()
+{
+	std::cout << "port: " << this->port << std::endl;
+	std::cout << "host: " << this->host << std::endl;
+	std::cout << "error_page: " << this->error_page << std::endl;
+	std::cout << "max_body_size: " << this->max_body_size << std::endl;
+	std::cout << "servers: " << std::endl;
+	for (size_t i = 0; i < this->servers.size(); i++)
+		std::cout << this->servers[i] << std::endl;
+}

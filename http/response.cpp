@@ -264,28 +264,35 @@ void Response::delete_method(server_config &s, std::string path)
 
 void Response::get_method(server_config &s,std::string path)
 {
+    std::cout << "path>> " << path << std::endl;
+    s.print_server();
     if (search_for_default(s,path))
         return;
+        std::cout << "!!!!!!!!!!!!!!!!!!!" << std::endl;
     location_config loc = s.longest_prefix_match(path);
     path = get_file_name(path, loc.get_prefix());
     std::string file_name = loc.get_root() + path;
     if (isDir(file_name) && loc.get_autoindex() == "on")
     {
+        std::cout << "autoindex on" << std::endl;
         autoindex(file_name, loc.get_prefix(), loc.get_root());
         return;
     }
     if (!exists_test(file_name))
     {
+        std::cout << "file not found" << std::endl;
         set_status_code(404);
         return;
     }
     if (!find_string(loc.get_methods(),"GET"))
     {
+        std::cout << "method not allowed" << std::endl;
         set_status_code(405);
         return;
     }
     if (isDir(file_name) && loc.get_autoindex() == "off")
     {
+        std::cout << "autoindex off" << std::endl;
         set_status_code(403);
         return;
     }
@@ -318,11 +325,15 @@ void Response::get_method(server_config &s,std::string path)
     // }
 // }
 
-Response::Response(server_config &server, request &req)
+Response::Response(server_config server, request &req)
 {
     // std::cout << server.get_locations()[0].get_root() << std::endl;
     if (req.get_method() == "GET")
     {
+        std::cout << "GET" << std::endl;
+        server.print_server();
+        req.print_request();
+
         get_method(server, req.get_path());
         generate_headers();
     }

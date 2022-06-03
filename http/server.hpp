@@ -69,10 +69,13 @@ class server_config
 		std::vector<location_config> get_locations();
 		int get_port();
 		void add_location(location_config src);
-		void create_server();
+		int create_server(int port);
 		int get_fd_socket();
 		location_config longest_prefix_match(std::string);
 		int longest_match(std::string str, std::string needle);
+		void print_server();
 };
+
+server_config get_server_by_host(std::vector<server_config> servers, std::string host);
 
 #endif
