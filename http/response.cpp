@@ -87,9 +87,6 @@ std::string Response::get_header()
     return header;
 }
 
-
-
-
 bool Response::isDir(std::string path)
 {
     struct stat statbuf;
@@ -238,6 +235,17 @@ void Response::generate_headers()
 	    header += "\r\n";
         header += body;
     }
+    else if (status_code == 413)
+    {
+        body = "<html>\n<head><title>413 Request Entity Too Large</title></head>\n<body bgcolor='white'>\n<center><h1>413 Request Entity Too Large</h1></center>\n</body>\n</html>";
+        header = "HTTP/1.1 413 Request Entity Too Large\r\n";
+	    header += "Content-Type: text/html\r\n";
+	    header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
+	    header += "Server: mywebserver\r\n";
+	    header += "Date: " + formatted_time() + "\r\n";
+	    header += "\r\n";
+        header += body;
+    }
 }
 
 void Response::delete_method(server_config &s, std::string path)
@@ -246,7 +254,7 @@ void Response::delete_method(server_config &s, std::string path)
     location_config loc = s.longest_prefix_match(path);
     path = get_file_name(path, loc.get_prefix());
     file_name = loc.get_root() + path;
-    for (size_t i=0 ; i < loc.get_methods().size();i++)
+    for (size_t i = 0 ; i < loc.get_methods().size();i++)
     {
         std::cout << loc.get_methods()[i] << std::endl;
     }
@@ -255,88 +263,73 @@ void Response::delete_method(server_config &s, std::string path)
         set_status_code(405);
         return;
     }
-    // printf("file path ++++ %s\n",file_path.c_str());
     if (std::remove(file_name.c_str()))
         set_status_code(404);
     else
         set_status_code(200);
 }
 
-// function to create a directory
-
-
 void Response::get_method(server_config &s,std::string path)
 {
-    std::cout << "path>> " << path << std::endl;
     s.print_server();
     if (search_for_default(s,path))
         return;
-        std::cout << "!!!!!!!!!!!!!!!!!!!" << std::endl;
     location_config loc = s.longest_prefix_match(path);
     path = get_file_name(path, loc.get_prefix());
     std::string file_name = loc.get_root() + path;
     if (isDir(file_name) && loc.get_autoindex() == "on")
     {
-        std::cout << "autoindex on" << std::endl;
         autoindex(file_name, loc.get_prefix(), loc.get_root());
         return;
     }
     if (!exists_test(file_name))
     {
-        std::cout << "file not found" << std::endl;
         set_status_code(404);
         return;
     }
     if (!find_string(loc.get_methods(),"GET"))
     {
-        std::cout << "method not allowed" << std::endl;
         set_status_code(405);
         return;
     }
     if (isDir(file_name) && loc.get_autoindex() == "off")
     {
-        std::cout << "autoindex off" << std::endl;
         set_status_code(403);
         return;
     }
-    // 413
     get_file(file_name);
 }
 
-// void Response::post_method(server_config &s, request &req)
-// {
-    // int index = search_for_path(s, req.get_path());
-    // if (index != -1)
-    //     set_status_code(409); // conflict
-    // else
-    // {
-    //     std::ofstream outfile (req.get_path());
-    //     outfile << req.get_body();
-    //     outfile.close();
-    //     set_status_code(201); //created
+void Response::post_method(server_config &s, request &req)
+{
+    location_config loc = s.longest_prefix_match(req.get_path());
+    if (s.get_max_body_size() < size_t(fsize(req.get_body().c_str())))
+    {
+        remove(req.get_body().c_str());
+        set_status_code(413);
+        return ;
+    }
+    else if (!find_string(loc.get_methods(),"POST"))
+    {
+        set_status_code(405);
+        return;
+    }
+    std::string new_file(strrchr(req.get_body().c_str(), '/') + get_file_ext(std::string(req.get_type())));
+    std::string file_name = loc.get_upload_path() + "/" + new_file;
+    std::ifstream in(req.get_body().c_str(), std::ios::in | std::ios::binary);
+    std::ofstream out(file_name, std::ios::out | std::ios::binary);
+    out << in.rdbuf();
+    in.close();
+    out.close();
+    remove(req.get_body().c_str());
+    set_status_code(201);
+}                                          
 
-        // std::string content;
-        // if (infile && outfile)
-        // for(int i=0; !infile.eof(); i++)     // get content of infile
-        // content += infile.get();
-        // infile.close();
-        // content.erase(content.end()-1);
-        // outfile << content;
-        // outfile.close();
-
-
-    // }
-// }
 
 Response::Response(server_config server, request &req)
 {
-    // std::cout << server.get_locations()[0].get_root() << std::endl;
     if (req.get_method() == "GET")
     {
-        std::cout << "GET" << std::endl;
-        server.print_server();
-        req.print_request();
-
         get_method(server, req.get_path());
         generate_headers();
     }
@@ -347,7 +340,7 @@ Response::Response(server_config server, request &req)
     }
     else if (req.get_method() == "POST")
     {
-        std::cout << "post method\n";
-        // generate_headers();
+        post_method(server, req);
+        generate_headers();
     }
 }

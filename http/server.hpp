@@ -37,6 +37,7 @@ class location_config
 		void 	set_cgi_path(std::string cgi_path);
 		void 	set_upload_path(std::string upload_path);
 		void 	set_prefix(std::string prefix);
+		void	print_location();
 };
 
 class server_config
@@ -45,7 +46,7 @@ class server_config
 		int					port;
 		std::string			host;
 		std::string			error_page;
-		int					max_body_size;
+		size_t				max_body_size;
 		std::vector<std::string> servers;
 		std::vector<location_config> locations;
 		int fd_socket;
@@ -59,10 +60,10 @@ class server_config
 		void set_port(int);
 		void set_host(std::string);
 		void set_error_page(std::string);
-		void set_max_body_size(int);
+		void set_max_body_size(size_t);
 		void set_servers(std::vector<std::string>);
 		void set_locations(std::vector<location_config>);
-		int get_max_body_size();
+		size_t get_max_body_size();
 		std::string get_host();
 		std::string get_error_page();
 		std::vector<std::string> get_servers();

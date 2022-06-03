@@ -44,7 +44,7 @@ class Response
         std::string get_file_path(std::string path, std::string prefix);
         int search_for_default(server_config &s,std::string path);
         void get_file(std::string file_name);
-        // void post_method(server_config &s, request &req);
+        void post_method(server_config &s, request &req);
         void    print_response();
 };
 

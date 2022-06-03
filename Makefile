@@ -11,7 +11,7 @@ SRCS =	webserv.cpp\
 all: $(NAME)
 
 $(NAME): $(SRCS)
-		@c++ -std=c++98 -Wall -Wextra -Werror -fsanitize=address -g $(SRCS) -o $(NAME)
+		@c++ -std=c++98 -Wall -Wextra -Werror $(SRCS) -o $(NAME)
 
 clean:
 	@rm -rf $(NAME)

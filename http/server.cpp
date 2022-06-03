@@ -186,7 +186,7 @@ std::string server_config::get_error_page()
 	return (this->error_page);
 }
 
-int server_config::get_max_body_size()
+size_t server_config::get_max_body_size()
 {
 	return (this->max_body_size);
 }
@@ -217,7 +217,7 @@ void server_config::set_error_page(std::string error_page)
 	this->error_page = error_page;
 }
 
-void server_config::set_max_body_size(int max_body_size)
+void server_config::set_max_body_size(size_t max_body_size)
 {
 	this->max_body_size = max_body_size;
 }
@@ -287,17 +287,11 @@ location_config server_config::longest_prefix_match(std::string prefix)
 	return (this->locations[index]);
 }
 
-
-
 server_config get_server_by_host(std::vector<server_config> servers, std::string host)
 {
 	std::string host_name(split(host, ':')[0]);
-	std::cout << "host: " << host << std::endl;
-	std::cout << "host_name: " << host_name << std::endl;
-	std::cout << "size: " << servers.size() << std::endl;
 	if (is_ip(host_name))
 	{
-			std::cout << "is ip" << std::endl;
 		for (size_t i = 0; i < servers.size(); i++)
 		{
 			server_config server = servers[i];
@@ -316,7 +310,6 @@ server_config get_server_by_host(std::vector<server_config> servers, std::string
 	return (server_config());
 }
 
-//print server
 void server_config::print_server()
 {
 	std::cout << "port: " << this->port << std::endl;
@@ -326,4 +319,14 @@ void server_config::print_server()
 	std::cout << "servers: " << std::endl;
 	for (size_t i = 0; i < this->servers.size(); i++)
 		std::cout << this->servers[i] << std::endl;
+	std::cout << "locations: " << std::endl;
+	for (size_t i = 0; i < this->locations.size(); i++)
+		this->locations[i].print_location();
+}
+
+void location_config::print_location()
+{
+	std::cout << "prefix: " << this->prefix << std::endl;
+	std::cout << "root: " << this->root << std::endl;
+	std::cout << "upload_dir: " << this->upload_path << std::endl;
 }

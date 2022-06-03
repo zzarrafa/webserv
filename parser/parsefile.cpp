@@ -157,7 +157,7 @@ void parsefile::fill_servers(std::ifstream &file)
 			if (server.get_max_body_size() == 0)
 			{
 				if (is_number(value))
-					server.set_max_body_size(std::stoi(value));
+					server.set_max_body_size(std::stoi(value) * 1048576);
 				else
  					throw std::runtime_error("Max body size must be a number");
 			}
@@ -288,7 +288,12 @@ location_config parsefile::fill_locations(std::ifstream &file)
 			if (location.get_upload_path() == "")
 			{
 				if (is_one_string(value))
-					location.set_upload_path(value);
+				{
+					std::string str(location.get_root() + value);
+					if (!is_path_exist(str))
+						mkdir(str.c_str(), 0777);
+					location.set_upload_path(str);
+				}
 				else
 					throw std::runtime_error("upload path must be a valid path");
 			}

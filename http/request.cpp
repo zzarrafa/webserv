@@ -176,19 +176,13 @@ void request::add_headers(std::string key, std::string value)
 void request::check_if_complete()
 {
     if (this->_method == "GET" || this->_method == "DELETE")
-    {
-        // std::cout << "> Request is complete" << std::endl;
         this->_is_complete = true;
-    }
     if (this->_length == (size_t)fsize(this->_body.c_str()))
-    {
         this->_is_complete = true;
-    }
 }
 
 request::request(char *buffer, int ret)
 {
-    //variables
     std::stringstream   ss(buffer);
     std::string         line;
     bool                is_first = true;
@@ -196,7 +190,6 @@ request::request(char *buffer, int ret)
     std::string         value;
     std::string         chars = " \t\n\r";
 
-    //initialize
     this->_is_complete = false;
     this->_offset = 0;
     this->_headers_len = 0;
@@ -270,15 +263,12 @@ int     request::read_hex(char *buffer, int *len)
 
 int     calculate_hex(char *buffer)
 {
-    std::cout << "hiho" << std::endl;
     int i = 0;
     while (buffer[i] != '\r' && buffer[i] != '\0')
         i++;
-    int j = 0;
-    std::cout << "Calculating hex: [";
-    while (j < i)
-        std::cout << buffer[j++];
-    std::cout << "]\n";
+    // int j = 0;
+    // while (j < i)
+    //     std::cout << buffer[j++];
     return (i);
 }
 
@@ -303,7 +293,6 @@ char    *request::clean_buffer(char *buffer, int ret, int *counter)
     {
         if (buffer[i] == '\r' && i + 3 < ret && buffer[i + 1] == '\n' && valid_hex(buffer[i + 2], buffer[i + 3]) && isxdigit(buffer[i + 4]))
         {
-            std::cout << "Found CR LF" << std::endl;
             i += 2;
             i += calculate_hex(buffer + i);
             i += 2;

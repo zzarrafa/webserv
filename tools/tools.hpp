@@ -29,5 +29,7 @@ int create_server(int port);
 std::vector<server_config> get_servers_with_same_port(parsefile &pf, int port);
 int find_string_position(std::vector<std::string> vec, std::string str);
 std::map<int, int> switch_map(std::map<int, int> map);
+std::string     get_file_ext(std::string res);
+bool is_path_exist(const std::string s);
 
 #endif
