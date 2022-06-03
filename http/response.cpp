@@ -87,6 +87,9 @@ std::string Response::get_header()
     return header;
 }
 
+
+
+
 bool Response::isDir(std::string path)
 {
     struct stat statbuf;

@@ -163,6 +163,11 @@ std::map<std::string, std::string> request::get_headers()
     return (this->_headers);
 }
 
+std::string request::get_header(std::string hdr)
+{
+    return this->_headers[hdr];
+}
+
 void request::add_headers(std::string key, std::string value)
 {
     this->_headers.insert(std::pair<std::string, std::string>(key, value));

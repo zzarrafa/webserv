@@ -48,6 +48,7 @@ public:
     std::string get_encoding();
     std::string get_connection();
 
+    std::string get_header(std::string hdr);
     std::map<std::string, std::string> get_headers();
     std::string parse_chunked_body(std::string str, int len);
     bool    get_is_complete();
