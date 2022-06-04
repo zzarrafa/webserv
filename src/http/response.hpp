@@ -3,17 +3,18 @@
 
 # include "../webserv.hpp"
 
-
 class Response
 {
     private:
         int status_code;
         std::string status;
-        int content_lenght;
+        size_t content_lenght;
         std::string content_type;
         std::string body;
         std::string header;
         std::string auto_index;
+        size_t written;
+        bool is_complete;
 
     public:
         Response();
@@ -25,11 +26,12 @@ class Response
         Response &operator=(const Response &r);
 
         void    set_status_code(int status);
-        void    set_content_lenght(int cl);
+        void     get_headers(std::string file_name);
+        void    set_content_lenght(size_t cl);
         void    set_content_type(std::string ct);
         void    set_status(std::string status);
-        int         get_status_code();
-        int         get_content_lenght();
+        int     get_status_code();
+        size_t  get_content_lenght();
         std::string get_status();
         std::string get_content_type();
         std::string get_body();
@@ -47,6 +49,10 @@ class Response
         void get_file(std::string file_name);
         void post_method(server_config &s, request &req);
         void    print_response();
+        size_t  get_written();
+        void    set_written(size_t written);
+        void    set_is_complete(bool is_complete);
+        bool    get_is_complete();
 };
 
 

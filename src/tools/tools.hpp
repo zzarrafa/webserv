@@ -2,6 +2,9 @@
 #define TOOLS_HPP
 
 #include "../webserv.hpp"
+// #include "../http/response.hpp"
+
+class Response;
 
 typedef     struct{
     std::string     file_name;
@@ -35,5 +38,7 @@ bool is_valid_chunk(char *buf, int size, int debug) ;
 int first_carriage_return(char *buf, int size);
 void print_binary(char *s, int len);
 std::string read_line(char *buffer, size_t size);
+char    *get_buffer(size_t written, size_t len, std::string file, size_t *size);
+char    *get_buffer_with_headers(Response *rep, size_t *size);
 
 #endif

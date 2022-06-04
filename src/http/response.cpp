@@ -5,6 +5,8 @@ Response::Response()
     this->status_code = 200;
     this->auto_index = "";
     this->content_lenght = 0;
+    this->written = 0;
+    this->is_complete = false;
 }
 
 Response::~Response()
@@ -57,7 +59,7 @@ void Response::set_status_code(int status)
 {
     this->status_code = status;
 }
-void Response::set_content_lenght(int cl)
+void Response::set_content_lenght(size_t cl)
 {
     this->content_lenght = cl;
 }
@@ -73,7 +75,7 @@ int Response::get_status_code()
 {
     return status_code;
 }
-int Response::get_content_lenght()
+size_t Response::get_content_lenght()
 {
     return content_lenght;
 }
@@ -85,12 +87,18 @@ std::string Response::get_status()
 {
     return status;
 }
-
 std::string Response::get_header()
 {
     return header;
 }
-
+size_t Response::get_written()
+{
+    return written;
+}
+void Response::set_written(size_t written)
+{
+    this->written = written;
+}
 bool Response::isDir(std::string path)
 {
     struct stat statbuf;
@@ -101,7 +109,31 @@ bool Response::isDir(std::string path)
 		return 0;
 	return S_ISDIR(statbuf.st_mode);
 }
-
+bool Response::get_is_complete()
+{
+    return is_complete;
+}
+void Response::set_is_complete(bool is_complete)
+{
+    this->is_complete = is_complete;
+}
+void Response::get_file(std::string file_name)
+{
+    std::ifstream f(file_name);
+    if (f)
+    {
+        std::ostringstream ss;
+        ss << f.rdbuf();
+        body = ss.str();  // the contenant of the file in the body / check the contenant lenght and the extention
+    }
+    header = "HTTP/1.1 200 ok\r\n";
+	header += "Content-Type: " + get_file_type(file_name) + "\r\n";
+	header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
+	header += "Server: mywebserv\r\n";
+	header += "Date: " + formatted_time() + "\r\n";
+	header += "\r\n";
+    header += body;
+}
 int Response::search_for_default(server_config &s,std::string path)
 {
     std::vector<location_config> locations = s.get_locations();
@@ -153,23 +185,6 @@ void Response::autoindex(std::string path, std::string prefix, std::string root)
 	header += body;
 }
 
-void Response::get_file(std::string file_name)
-{
-    std::ifstream f(file_name);
-    if (f)
-    {
-        std::ostringstream ss;
-        ss << f.rdbuf();
-        body = ss.str();  // the contenant of the file in the body / check the contenant lenght and the extention
-    }
-    header = "HTTP/1.1 200 ok\r\n";
-	header += "Content-Type: " + get_file_type(file_name) + "\r\n";
-	header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
-	header += "Server: mywebserv\r\n";
-	header += "Date: " + formatted_time() + "\r\n";
-	header += "\r\n";
-    header += body;
-}
 
 void Response::generate_headers()
 {
@@ -264,6 +279,16 @@ void Response::generate_headers()
     }
 }
 
+void Response::get_headers(std::string file_name)
+{
+    header = "HTTP/1.1 200 ok\r\n";
+	header += "Content-Type: " + get_file_type(file_name) + "\r\n";
+	header += "Content-Length: "+ std::to_string(this->content_lenght) + "\r\n";
+	header += "Server: mywebserv\r\n";
+	header += "Date: " + formatted_time() + "\r\n";
+	header += "\r\n";
+}
+
 void Response::delete_method(server_config &s, std::string path)
 {
     std::string file_name;
@@ -287,7 +312,6 @@ void Response::delete_method(server_config &s, std::string path)
 
 void Response::get_method(server_config &s,std::string path)
 {
-    // s.print_server();
     if (search_for_default(s,path))
         return;
     location_config loc = s.longest_prefix_match(path);
@@ -314,6 +338,13 @@ void Response::get_method(server_config &s,std::string path)
         return;
     }
     this->body = file_name;
+    this->content_lenght = fsize(file_name.c_str());
+    get_headers(file_name);
+    if (content_lenght + header.size() < SIZE_OF_BUFFER)
+    {
+        std::cout << "Number" << content_lenght - header.size() << std::endl;
+        this->is_complete = true;
+    }
 }
 
 void Response::post_method(server_config &s, request &req)

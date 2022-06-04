@@ -1,4 +1,5 @@
 #include "../webserv.hpp"
+#include "../http/response.hpp"
 
 std::string& leftTrim(std::string& str, std::string& chars)
 {
@@ -510,4 +511,53 @@ bool is_valid_chunk(char *buf, int size, int debug)
 	}
 	// std::cout << "false 3" << std::endl;
 	return false;
+}
+
+char    *get_buffer(size_t written, size_t len, std::string file, size_t *size)
+{
+	char	*buf;
+	int		fd;
+	int		ret;
+
+	if (len - written <= SIZE_OF_BUFFER)
+		len -= written;
+	else
+		len = SIZE_OF_BUFFER;
+	buf = (char *)malloc(sizeof(char) * len);
+	fd = open(file.c_str(), O_RDONLY);
+	lseek(fd, written, SEEK_SET);
+	if (fd == -1)
+	{
+		perror("open");
+		return (NULL);
+	}
+	ret = read(fd, buf, len);
+	if (ret == -1)
+	{
+		perror("read");
+		return (NULL);
+	}
+	close(fd);
+	*size = ret;
+	return (buf);
+}
+
+char    *get_buffer_with_headers(Response *rep, size_t *size)
+{
+	char *buf;
+	char tmp[SIZE_OF_BUFFER];
+	buf = (char *)malloc(sizeof(char) * SIZE_OF_BUFFER);
+	strncpy(buf, rep->get_header().c_str(), rep->get_header().size());
+	size_t i = rep->get_header().size();
+	int j = 0;
+	int fd = open(rep->get_body().c_str(), O_RDONLY);
+	int ret = read(fd, tmp, SIZE_OF_BUFFER - rep->get_header().size());
+	*size = ret + rep->get_header().size();
+	while (j < ret)
+	{
+		buf[i] = tmp[j];
+		i++;
+		j++;
+	}
+	return (buf);
 }
