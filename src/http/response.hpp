@@ -32,6 +32,7 @@ class Response
         int         get_content_lenght();
         std::string get_status();
         std::string get_content_type();
+        std::string get_body();
         bool isDir(std::string path);
         std::vector<std::string> getfiles();
         void autoindex(std::string path, std::string prefix, std::string root);

@@ -48,6 +48,10 @@ Response &Response::operator=(const Response &src)
     return (*this);
 }
 
+std::string Response::get_body()
+{
+    return this->body;
+}
 
 void Response::set_status_code(int status)
 {
@@ -152,8 +156,8 @@ void Response::autoindex(std::string path, std::string prefix, std::string root)
 void Response::get_file(std::string file_name)
 {
     std::ifstream f(file_name);
-     if(f)
-     {
+    if (f)
+    {
         std::ostringstream ss;
         ss << f.rdbuf();
         body = ss.str();  // the contenant of the file in the body / check the contenant lenght and the extention
@@ -171,6 +175,7 @@ void Response::generate_headers()
 {
     if (status_code == 400)
     {
+
         body = "<html>\n<head><title>400 Bad Request</title></head>\n<body bgcolor='white'>\n<center><h1>400 Bad Request</h1></center>\n</body>\n</html>";
         header = "HTTP/1.1 400 Bad Request\r\n";
         header += "Content-Type: text/html\r\n";
@@ -282,7 +287,7 @@ void Response::delete_method(server_config &s, std::string path)
 
 void Response::get_method(server_config &s,std::string path)
 {
-    s.print_server();
+    // s.print_server();
     if (search_for_default(s,path))
         return;
     location_config loc = s.longest_prefix_match(path);
@@ -308,7 +313,7 @@ void Response::get_method(server_config &s,std::string path)
         set_status_code(403);
         return;
     }
-    get_file(file_name);
+    this->body = file_name;
 }
 
 void Response::post_method(server_config &s, request &req)
@@ -338,7 +343,6 @@ void Response::post_method(server_config &s, request &req)
 
 Response::Response(server_config server, request &req)
 {
-    std::cout << "error " << req.get_error_flag() << std::endl;
     if (req.get_error_flag() == 400)
     {
         set_status_code(400);
@@ -358,6 +362,11 @@ Response::Response(server_config server, request &req)
     else if (req.get_method() == "POST")
     {
         post_method(server, req);
+        generate_headers();
+    }
+    else
+    {
+        set_status_code(400);
         generate_headers();
     }
 }
