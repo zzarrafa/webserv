@@ -34,5 +34,6 @@ bool is_path_exist(const std::string s);
 bool is_valid_chunk(char *buf, int size, int debug) ;
 int first_carriage_return(char *buf, int size);
 void print_binary(char *s, int len);
+std::string read_line(char *buffer, size_t size);
 
 #endif

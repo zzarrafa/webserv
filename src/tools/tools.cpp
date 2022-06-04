@@ -158,6 +158,20 @@ std::string   split_file_path(std::string type)
 	return res;
 }
 
+std::string		read_line(char *buffer, size_t size)
+{
+	std::string line;
+	for (size_t i = 0; i < size; i++)
+	{
+		if (buffer[i] == '\n')
+		{
+			line.append(buffer, i);
+			return (line);
+		}
+	}
+	return (std::string(""));
+}
+
 std::string     get_file_type(std::string type)
 {
     std::string res;

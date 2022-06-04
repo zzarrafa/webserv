@@ -208,7 +208,7 @@ void request::check_headers()
         this->_error_flag = 400;
     if (this->_version == "")
         this->_error_flag = 400;
-    if (this->_length == 0)
+    if (this->_method == "POST" && this->_length == 0)
         this->_error_flag = 400;
     if (this->_length > 0 && fsize(this->_body.c_str()) == 0)
         this->_error_flag = 400;
@@ -216,7 +216,6 @@ void request::check_headers()
 
 request::request(char *buffer, int ret)
 {
-    std::stringstream   ss(buffer);
     std::string         line;
     bool                is_first = true;
     std::string         key;
@@ -236,8 +235,9 @@ request::request(char *buffer, int ret)
     this->_type = "";
     this->_path = "";
 
-    while (getline(ss, line))
+    while ((line = read_line(buffer, ret)).size())
     {
+        buffer += line.size() + 1;
         if (line == "\r")
         {
             this->_offset += 2;
@@ -280,7 +280,7 @@ request::request(char *buffer, int ret)
     this->check_headers();
     if (this->_is_complete || this->_error_flag != 0)
         return ;
-    fill_body(buffer + this->_offset, 1, ret);
+    fill_body(buffer, 1, ret);
 }
 
 int     request::find_char(char *buffer, char c)
