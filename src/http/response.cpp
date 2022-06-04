@@ -169,7 +169,18 @@ void Response::get_file(std::string file_name)
 
 void Response::generate_headers()
 {
-    if (status_code == 404)
+    if (status_code == 400)
+    {
+        body = "<html>\n<head><title>400 Bad Request</title></head>\n<body bgcolor='white'>\n<center><h1>400 Bad Request</h1></center>\n</body>\n</html>";
+        header = "HTTP/1.1 400 Bad Request\r\n";
+        header += "Content-Type: text/html\r\n";
+        header += "Content-Length: " + std::to_string(body.size()) + "\r\n";
+        header += "Server: mywebserver\r\n";
+        header += "Date: " + formatted_time() + "\r\n";
+        header += "\r\n";
+        header += body;
+    }
+    else if (status_code == 404)
     {
         body = "<html>\n<head><title>404 Not Found</title></head>\n<body bgcolor='white'>\n<center><h1>404 Not Found</h1></center>\n</body>\n</html>";
         header = "HTTP/1.1 404 Not Found\r\n";
@@ -323,11 +334,17 @@ void Response::post_method(server_config &s, request &req)
     out.close();
     remove(req.get_body().c_str());
     set_status_code(201);
-}                                          
-
+}
 
 Response::Response(server_config server, request &req)
 {
+    std::cout << "error " << req.get_error_flag() << std::endl;
+    if (req.get_error_flag() == 400)
+    {
+        set_status_code(400);
+        generate_headers();
+        return;
+    }
     if (req.get_method() == "GET")
     {
         get_method(server, req.get_path());
@@ -344,3 +361,4 @@ Response::Response(server_config server, request &req)
         generate_headers();
     }
 }
+

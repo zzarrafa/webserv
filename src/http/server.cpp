@@ -303,11 +303,11 @@ server_config get_server_by_host(std::vector<server_config> servers, std::string
 	{
 		for (size_t i = 0; i < servers.size(); i++)
 		{
-			if (find_string(servers[i].get_servers(), host))
+			if (find_string(servers[i].get_servers(), host_name))
 				return servers[i];
 		}
 	}
-	return (server_config());
+	return (servers[0]);
 }
 
 void server_config::print_server()

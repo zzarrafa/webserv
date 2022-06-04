@@ -1,17 +1,18 @@
 NAME = webserv
+FLAGS = -std=c++98 -Wall -Wextra -Werror -g -fsanitize=address
 
-SRCS =	webserv.cpp\
-		http/connection.cpp\
-		http/request.cpp\
-		http/response.cpp\
-		http/server.cpp\
-		parser/parsefile.cpp\
-		tools/tools.cpp\
+SRCS =	src/webserv.cpp\
+		src/http/connection.cpp\
+		src/http/request.cpp\
+		src/http/response.cpp\
+		src/http/server.cpp\
+		src/parser/parsefile.cpp\
+		src/tools/tools.cpp\
 
 all: $(NAME)
 
 $(NAME): $(SRCS)
-		@c++ -std=c++98 -Wall -Wextra -Werror $(SRCS) -o $(NAME)
+		@c++ $(FLAGS) $(SRCS) -o $(NAME)
 
 clean:
 	@rm -rf $(NAME)
@@ -22,7 +23,7 @@ remove:
 fclean: clean remove
 
 start: $(NAME)
-	@./$(NAME) config.conf
+	@./$(NAME) configs/config.conf
 
 re: fclean all
 

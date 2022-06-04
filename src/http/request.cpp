@@ -24,6 +24,7 @@ request::request(const request &src)
     this->_offset = src._offset;
     this->_headers_len = src._headers_len;
     this->_headers = src._headers;
+    this->_error_flag = src._error_flag;
 }
 
 request &request::operator=(const request &src)
@@ -42,6 +43,7 @@ request &request::operator=(const request &src)
     this->_offset = src._offset;
     this->_headers_len = src._headers_len;
     this->_headers = src._headers;
+    this->_error_flag = src._error_flag;
     return (*this);
 }
 
@@ -153,11 +155,6 @@ size_t request::get_length()
     return (this->_length);
 }
 
-bool request::get_is_complete()
-{
-    return (this->_is_complete);
-}
-
 std::map<std::string, std::string> request::get_headers()
 {
     return (this->_headers);
@@ -173,12 +170,48 @@ void request::add_headers(std::string key, std::string value)
     this->_headers.insert(std::pair<std::string, std::string>(key, value));
 }
 
+void request::set_is_complete(bool is_complete)
+{
+    this->_is_complete = is_complete;
+}
+
+bool request::get_is_complete()
+{
+    return (this->_is_complete);
+}
+
+void request::set_error_flag(int code)
+{
+    this->_error_flag = code;
+}
+
+int request::get_error_flag()
+{
+    return (this->_error_flag);
+}
+
 void request::check_if_complete()
 {
     if (this->_method == "GET" || this->_method == "DELETE")
         this->_is_complete = true;
     if (this->_length == (size_t)fsize(this->_body.c_str()))
         this->_is_complete = true;
+}
+
+void request::check_headers()
+{
+    if (this->_host == "")
+        this->_error_flag = 400;
+    if (this->_method == "")
+        this->_error_flag = 400;
+    if (this->_path == "")
+        this->_error_flag = 400;
+    if (this->_version == "")
+        this->_error_flag = 400;
+    if (this->_length == 0)
+        this->_error_flag = 400;
+    if (this->_length > 0 && fsize(this->_body.c_str()) == 0)
+        this->_error_flag = 400;
 }
 
 request::request(char *buffer, int ret)
@@ -191,10 +224,17 @@ request::request(char *buffer, int ret)
     std::string         chars = " \t\n\r";
 
     this->_is_complete = false;
-    this->_offset = 0;
     this->_headers_len = 0;
-    this->_body = "";
+    this->_error_flag = 0;
+    this->_offset = 0;
     this->_length = 0;
+    this->_connection = "";
+    this->_encoding = "";
+    this->_method = "";
+    this->_body = "";
+    this->_host = "";
+    this->_type = "";
+    this->_path = "";
 
     while (getline(ss, line))
     {
@@ -237,7 +277,8 @@ request::request(char *buffer, int ret)
         }
     }
     this->check_if_complete();
-    if (this->_is_complete)
+    this->check_headers();
+    if (this->_is_complete || this->_error_flag != 0)
         return ;
     fill_body(buffer + this->_offset, 1, ret);
 }
@@ -263,26 +304,37 @@ int     request::read_hex(char *buffer, int *len)
 
 int     calculate_hex(char *buffer)
 {
+    // std::cout << "calculate_hex" << std::endl;
     int i = 0;
-    while (buffer[i] != '\r' && buffer[i] != '\0')
+    while (buffer[i] != '\r')
         i++;
     // int j = 0;
+    // std::cout << "[";
     // while (j < i)
-    //     std::cout << buffer[j++];
+        // std::cout << buffer[j++];
+    // std::cout << "]" << std::endl;
     return (i);
 }
 
 char    *request::clean_buffer(char *buffer, int ret, int *counter)
 {
+    // std::cout << "clean_buffer" << std::endl;
     int i = 0;
     *counter = 0;
     while (i < ret)
     {
-        if (buffer[i] == '\r' && i + 3 < ret && buffer[i + 1] == '\n' && valid_hex(buffer[i + 2], buffer[i + 3]) && isxdigit(buffer[i + 4]))
+        if (i + 5 < ret && buffer[i] == '\r' && buffer[i + 1] == '\n' && isxdigit(buffer[i + 2]))
         {
-            *counter += calculate_hex(buffer + i + 2);
-            *counter += 4;
-            i += *counter;
+            // std::cout << "before: ";
+            // printf("%c", buffer[i + 2]);
+            // std::cout << std::endl;
+            if (is_valid_chunk(buffer + i, ret - i, 1))
+            {
+                *counter += calculate_hex(buffer + i + 2);
+                // std::cout << "counter" << *counter << std::endl;
+                *counter += 4;
+                i += *counter;
+            }
         }
         i++;
     }
@@ -291,7 +343,7 @@ char    *request::clean_buffer(char *buffer, int ret, int *counter)
     int j = 0;
     while (i < ret)
     {
-        if (buffer[i] == '\r' && i + 3 < ret && buffer[i + 1] == '\n' && valid_hex(buffer[i + 2], buffer[i + 3]) && isxdigit(buffer[i + 4]))
+        if (i + 5 < ret && buffer[i] == '\r' && buffer[i + 1] == '\n' && isxdigit(buffer[i + 2]) && is_valid_chunk(buffer + i, ret - i, 0))
         {
             i += 2;
             i += calculate_hex(buffer + i);
@@ -325,14 +377,18 @@ void    request::fill_body(char *buffer, int flag, int ret)
             write(fd, buffer, ret - this->_offset);
         }
         else
-            write(fd, buffer, this->_length);
+            write(fd, buffer, ret - this->_offset);
         close(fd);
     }
     else if (flag == 2)
     {
         // std::cout << "to read: " << ret << std::endl;
         int counter = 0;
-        char *new_buffer = clean_buffer(buffer, ret, &counter);
+        char *new_buffer;
+        if (this->_encoding == "chunked")
+            new_buffer = clean_buffer(buffer, ret, &counter);
+        else
+            new_buffer = buffer;
         fd = open(this->_body.c_str(), O_RDWR | O_APPEND, 0666);
         write(fd, new_buffer, ret - counter);
         close(fd);

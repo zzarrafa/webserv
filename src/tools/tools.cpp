@@ -24,6 +24,16 @@ bool is_method(std::string str)
 	return (false);
 }
 
+void print_binary(char *s, int len)
+{
+	printf("=>[");
+	for (int i = 0; i < len; i++)
+	{
+		printf("%c", s[i]);
+	}
+	printf("]\n");
+}
+
 std::vector<server_config> get_servers_with_same_port(parsefile &pf, int port)
 {
 	std::vector<server_config> vec;
@@ -209,14 +219,14 @@ std::string     get_file_type(std::string type)
 		else if (res == ".mp3") return "audio/mpeg";
 		else if (res == ".ogg") return "audio/ogg";
 		else if (res == ".m4a") return "audio/x-m4a";
-		else if (res == ".ra"	) return "audio/x-realaudio";
-		else if (res == ".pl"	) return "application/x-perl";
-		else if (res == ".py"	) return "application/x-python";
-		else if (res == ".php"	) return "application/x-php";
-		else if (res == ".cpp"	) return "application/x-c++";
-		else if (res == ".c"	) return "application/x-c";
+		else if (res == ".ra") return "audio/x-realaudio";
+		else if (res == ".pl") return "application/x-perl";
+		else if (res == ".py") return "application/x-python";
+		else if (res == ".php") return "application/x-php";
+		else if (res == ".cpp") return "application/x-c++";
+		else if (res == ".c") return "application/x-c";
 	}
-    return "";
+    return "Plain Text";
 }
 
 std::string     get_file_ext(std::string res)
@@ -224,49 +234,50 @@ std::string     get_file_ext(std::string res)
     if (!res.empty())
 	{
 		if ("text/html" == res) return(".html");
-		else if ( "text/css" == res) return(".css");
-		else if ( "text/xml" == res) return(".xml");
-		else if ( "text/csv" == res) return(".csv");
-		else if ( "image/gif" == res) return(".gif");
-		else if ( "image/x-icon" == res) return(".ico");
-		else if ( "image/jpeg" == res) return(".jpeg");
-		else if ( "application/javascript" == res) return(".js");
-		else if ( "application/json" == res) return(".json");
-		else if ( "image/png" == res) return(".png");
-		else if ( "application/pdf" == res) return(".pdf");
-		else if ( "image/svg+xml" == res) return(".svg");
-		else if ( "text/plain" == res) return(".txt");
-		else if ( "application/atom+xml" == res) return(".atom");
-		else if ( "application/rss+xml" == res) return(".rss");
-		else if ( "image/webp" == res) return(".webp");
-		else if ( "video/3gpp" == res) return(".3gpp");
-		else if ( "video/3gpp" == res) return(".3gp");
-		else if ( "video/mp2t" == res) return(".ts");
-		else if ( "video/mp4" == res) return(".mp4");
-		else if ( "video/mpeg" == res) return(".mpeg");
-		else if ( "video/mpeg" == res) return(".mpg");
-		else if ( "video/quicktime" == res) return(".mov");
-		else if ( "video/webm" == res) return(".webm");
-		else if ( "video/x-flv" == res) return(".flv");
-		else if ( "video/x-m4v" == res) return(".m4v");
-		else if ( "video/x-mng" == res) return(".mng");
-		else if ( "video/x-ms-asf" == res) return(".asx");
-		else if ( "video/x-ms-asf" == res) return(".asf");
-		else if ( "application/javascript" == res) return(".js");
-		else if ( "video/x-ms-wmv" == res) return(".wmv");
-		else if ( "video/x-msvideo" == res) return(".avi");
-		else if ( "audio/midi" == res) return(".mid");
-		else if ( "audio/midi" == res) return(".midi");
-		else if ( "audio/midi" == res) return(".kar");
-		else if ( "audio/mpeg" == res) return(".mp3");
-		else if ( "audio/ogg" == res) return(".ogg");
-		else if ( "audio/x-m4a" == res) return(".m4a");
-		else if ( "audio/x-realaudio" == res) return(".ra");
-		else if ( "application/x-perl" == res) return(".pl");
-		else if ( "application/x-python" == res) return(".py");
-		else if ( "application/x-php" == res) return(".php");
-		else if ( "application/x-c++" == res) return(".cpp");
-		else if ( "application/x-c" == res) return(".c");
+		else if ("text/css" == res) return(".css");
+		else if ("text/xml" == res) return(".xml");
+		else if ("text/csv" == res) return(".csv");
+		else if ("image/gif" == res) return(".gif");
+		else if ("image/x-icon" == res) return(".ico");
+		else if ("image/jpeg" == res) return(".jpeg");
+		else if ("application/javascript" == res) return(".js");
+		else if ("application/json" == res) return(".json");
+		else if ("image/png" == res) return(".png");
+		else if ("application/pdf" == res) return(".pdf");
+		else if ("image/svg+xml" == res) return(".svg");
+		else if ("text/plain" == res) return(".txt");
+		else if ("application/atom+xml" == res) return(".atom");
+		else if ("application/rss+xml" == res) return(".rss");
+		else if ("image/webp" == res) return(".webp");
+		else if ("video/3gpp" == res) return(".3gpp");
+		else if ("video/3gpp" == res) return(".3gp");
+		else if ("video/mp2t" == res) return(".ts");
+		else if ("video/mp4" == res) return(".mp4");
+		else if ("video/mpeg" == res) return(".mpeg");
+		else if ("video/mpeg" == res) return(".mpg");
+		else if ("video/quicktime" == res) return(".mov");
+		else if ("video/webm" == res) return(".webm");
+		else if ("video/x-flv" == res) return(".flv");
+		else if ("video/x-m4v" == res) return(".m4v");
+		else if ("video/x-mng" == res) return(".mng");
+		else if ("video/x-ms-asf" == res) return(".asx");
+		else if ("video/x-ms-asf" == res) return(".asf");
+		else if ("application/javascript" == res) return(".js");
+		else if ("video/x-ms-wmv" == res) return(".wmv");
+		else if ("video/x-msvideo" == res) return(".avi");
+		else if ("audio/midi" == res) return(".mid");
+		else if ("audio/midi" == res) return(".midi");
+		else if ("audio/midi" == res) return(".kar");
+		else if ("audio/mpeg" == res) return(".mp3");
+		else if ("audio/ogg" == res) return(".ogg");
+		else if ("audio/x-m4a" == res) return(".m4a");
+		else if ("audio/x-realaudio" == res) return(".ra");
+		else if ("application/x-perl" == res) return(".pl");
+		else if ("application/x-python" == res) return(".py");
+		else if ("application/x-php" == res) return(".php");
+		else if ("application/x-c++" == res) return(".cpp");
+		else if ("application/x-c" == res) return(".c");
+		else if ("application/zip" == res) return(".zip");
 	}
     return "";
 }
@@ -420,4 +431,69 @@ std::map<int, int> switch_map(std::map<int, int> map)
 		it++;
 	}
 	return (new_map);
+}
+
+int	first_carriage_return(char *buf, int size)
+{
+	int i = 0;
+	while (i < size)
+	{
+		if (buf[i] == '\r')
+			return (i);
+		i++;
+	}
+	return (i);
+}
+
+bool is_valid_chunk(char *buf, int size, int debug)
+{
+	// print_binary(buf, size);
+	int i = 2;
+	if (size > 5)
+	{
+		if (buf[0] == '\r' && buf[1] == '\n' && buf[2] == '0' && buf[3] == '\r' && buf[4] == '\n')
+			return true;
+		if (buf[0] == '\r' && buf[1] == '\n')
+		{
+			if (first_carriage_return(buf + i, size - i) < 7)
+			{
+				if (debug)
+				{
+					std::cout << "]->" << first_carriage_return(buf + i, size - i) << std::endl;
+					std::cout << "after: ";
+					printf("%c", buf[i]);
+					std::cout << std::endl;
+				}
+				std::cout << "chars: >";
+				while (i < size)
+				{
+					printf("%c", buf[i]);
+					if (buf[i] == '\r')
+					{
+						std::cout << "breeak" << std::endl;
+						break ;
+					}
+					if (!isxdigit(buf[i]))
+					{
+						if (debug)
+						{
+							std::cout << "false 1" << std::endl;
+						}
+						return false;
+					}
+
+					i++;
+				}
+				return true;
+			}
+			else
+			{
+				if (debug)
+					std::cout << "false 2" << std::endl;
+				return false;
+			}
+		}
+	}
+	// std::cout << "false 3" << std::endl;
+	return false;
 }

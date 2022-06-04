@@ -1,15 +1,5 @@
 #include "../webserv.hpp"
 
-void print_binary(char *s , int len)
-{
-	printf("=>[");
-	for(int i = 0; i < len; i++)
-	{
-		printf("%c", s[i]);
-	}
-	printf("]\n");
-}
-
 void connection::network_core(parsefile s)
 {
 	std::map<int, request> chunking_map;
@@ -67,6 +57,8 @@ void connection::network_core(parsefile s)
 					if (FD_ISSET(fd, &readfds))
 					{
 						int ret = read(fd, buffer, SIZE_OF_BUFFER);
+						//print the buffer
+						// print_binary(buffer, ret);
 						if (ret == -1)
 						{
 							if (errno != EAGAIN)
@@ -117,14 +109,14 @@ void connection::network_core(parsefile s)
 					{
 						server_config tmp = get_server_by_host(server, serving_map[fd].get_host());
 						Response *rep;
-						tmp.print_server();
-						if (tmp.get_port() == 0)
-						{
-							rep = new Response();
-							rep->set_status_code(404);
-							rep->generate_headers();
-						}
-						else
+						// if (tmp.get_port() == 0)
+						// {
+						// 	rep = new Response();
+						// 	rep->set_status_code(404);
+						// 	rep->generate_headers();
+						// }
+						// else
+						serving_map[fd].print_request();
 							rep = new Response(tmp, serving_map[fd]);
 						usleep(6000);
 						write(fd, rep->get_header().c_str(), rep->get_header().size());
