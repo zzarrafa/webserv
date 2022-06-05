@@ -12,7 +12,6 @@ class location_config
 		std::string					root;
 		std::string					autoindex;
 		std::string					default_file;
-		std::string					cgi_path;
 		std::string					upload_path;
 
 	public:
@@ -49,7 +48,8 @@ class server_config
 		size_t				max_body_size;
 		std::vector<std::string> servers;
 		std::vector<location_config> locations;
-		int fd_socket;
+		int					fd_socket;
+		std::map<std::string, std::string>	cgi_path;
 
 	public:
 		server_config();
@@ -75,6 +75,8 @@ class server_config
 		location_config longest_prefix_match(std::string);
 		int longest_match(std::string str, std::string needle);
 		void print_server();
+		std::map<std::string, std::string> get_cgi_path();
+		void	add_cgi_path(std::string key, std::string value);
 };
 
 server_config get_server_by_host(std::vector<server_config> servers, std::string host);

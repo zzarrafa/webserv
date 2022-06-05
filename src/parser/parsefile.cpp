@@ -98,7 +98,6 @@ void parsefile::fill_servers(std::ifstream &file)
 		{
 			_servers.push_back(server);
 			_ports.insert(std::make_pair(server.get_port(), 0));
-			// std::cout << "server: " << server.get_host() << ":" << server.get_port() << std::endl;
 			return ;
 		}
 		if ((i = line.find("=")) == std::string::npos)
@@ -130,6 +129,13 @@ void parsefile::fill_servers(std::ifstream &file)
 			}
 			else
 				throw std::runtime_error("Host must be an ip, i.e: xxx.xxx.xxx.xxx");
+		}
+		else if (key == "cgi")
+		{
+			std::string new_value = tmp.substr(tmp.find("=") + 1);
+			std::string chars = " ";
+			std::vector<std::string>vec = split(Trim(new_value, chars), ' ');
+			server.add_cgi_path(vec[0], vec[1]);
 		}
 		else if (key == "server_name")
 		{
@@ -271,18 +277,6 @@ location_config parsefile::fill_locations(std::ifstream &file)
 			else
 				throw std::runtime_error("duplicate default in config file");
 		}
-		else if (key == "cgi")
-		{
-			if (location.get_cgi_path() == "")
-			{
-				if (is_one_string(value))
-					location.set_cgi_path(value);
-				else
-					throw std::runtime_error("cgi must be a valid path");
-			}
-			else
-				throw std::runtime_error("duplicate cgi in config file");
-		}
 		else if (key == "upload")
 		{
 			if (location.get_upload_path() == "")
@@ -317,20 +311,24 @@ void parsefile::print_servers()
 		std::cout << " > Servers names: " << std::endl;
 		for (size_t k = 0; k < _servers[i].get_servers().size(); k++)
 			std::cout << "	- " << _servers[i].get_servers()[k] << std::endl;
-		std::cout << " > Locations:" << std::endl;
-		for (size_t j = 0; j < _servers[i].get_locations().size(); j++)
-		{
-			std::cout << "  > Location " << j + 1 << ":" << std::endl;
-			std::cout << "	- Prefix: " << _servers[i].get_locations()[j].get_prefix() << std::endl;
-			std::cout << "	- Methods: ";
-			for (size_t x = 0; x < _servers[i].get_locations()[j].get_methods().size(); x++)
-				std::cout << _servers[i].get_locations()[j].get_methods()[x] << " ";
-			std::cout << std::endl;
-			std::cout << "	- Root: " << _servers[i].get_locations()[j].get_root() << std::endl;
-			std::cout << "	- Autoindex: " << _servers[i].get_locations()[j].get_autoindex() << std::endl;
-			std::cout << "	- Default file: " << _servers[i].get_locations()[j].get_default_file() << std::endl;
-			std::cout << "	- Cgi path: " << _servers[i].get_locations()[j].get_cgi_path() << std::endl;
-			std::cout << "	- Upload path: " << _servers[i].get_locations()[j].get_upload_path() << std::endl;
-		}
+		std::cout << " > CGI path: " << std::endl;
+		std::map<std::string, std::string> map_tmp = _servers[i].get_cgi_path();
+		for (auto std::map<std::string, std::string>::iterator it = map_tmp.begin(); it != map_tmp.end(); it++)
+				std::cout << it->first << " " << it->second << std::endl;
+		// std::cout << " > Locations:" << std::endl;
+		// for (size_t j = 0; j < _servers[i].get_locations().size(); j++)
+		// {
+		// 	std::cout << "  > Location " << j + 1 << ":" << std::endl;
+		// 	std::cout << "	- Prefix: " << _servers[i].get_locations()[j].get_prefix() << std::endl;
+		// 	std::cout << "	- Methods: ";
+		// 	for (size_t x = 0; x < _servers[i].get_locations()[j].get_methods().size(); x++)
+		// 		std::cout << _servers[i].get_locations()[j].get_methods()[x] << " ";
+		// 	std::cout << std::endl;
+		// 	std::cout << "	- Root: " << _servers[i].get_locations()[j].get_root() << std::endl;
+		// 	std::cout << "	- Autoindex: " << _servers[i].get_locations()[j].get_autoindex() << std::endl;
+		// 	std::cout << "	- Default file: " << _servers[i].get_locations()[j].get_default_file() << std::endl;
+		// 	// std::cout << "	- Cgi path: " << _servers[i].get_locations()[j].get_cgi_path() << std::endl;
+		// 	std::cout << "	- Upload path: " << _servers[i].get_locations()[j].get_upload_path() << std::endl;
+		// }
 	}
 }

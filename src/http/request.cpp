@@ -200,13 +200,14 @@ void request::check_if_complete()
 
 void request::check_headers()
 {
-    if (this->_host == "")
+    std::cout << "hahwa:" << this->_host << std::endl;
+    if (this->_host == "none")
         this->_error_flag = 400;
-    if (this->_method == "")
+    if (this->_method == "none")
         this->_error_flag = 400;
-    if (this->_path == "")
+    if (this->_path == "none")
         this->_error_flag = 400;
-    if (this->_version == "")
+    if (this->_version == "none")
         this->_error_flag = 400;
     if (this->_method == "POST" && this->_length == 0)
         this->_error_flag = 400;
@@ -227,13 +228,12 @@ request::request(char *buffer, int ret)
     this->_error_flag = 0;
     this->_offset = 0;
     this->_length = 0;
-    this->_connection = "";
     this->_encoding = "";
-    this->_method = "";
-    this->_body = "";
-    this->_host = "";
+    this->_method = "none";
+    this->_body = "none";
+    this->_host = "none";
     this->_type = "";
-    this->_path = "";
+    this->_path = "none";
 
     while ((line = read_line(buffer, ret)).size())
     {
@@ -276,10 +276,13 @@ request::request(char *buffer, int ret)
             }
         }
     }
-    this->check_if_complete();
     this->check_headers();
+    this->check_if_complete();
     if (this->_is_complete || this->_error_flag != 0)
+    {
+        std::cout << "blan!!" << std::endl;
         return ;
+    }
     fill_body(buffer, 1, ret);
 }
 

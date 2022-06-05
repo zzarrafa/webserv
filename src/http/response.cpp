@@ -24,7 +24,6 @@ Response::Response(const Response &src)
     this->body = src.body;
     this->header = src.header;
     this->status_code = src.status_code;
-
 }
 
 void Response::print_response()
@@ -310,13 +309,13 @@ void Response::delete_method(server_config &s, std::string path)
         set_status_code(200);
 }
 
-void Response::get_method(server_config &s,std::string path)
+void Response::get_method(server_config &s, request &req)
 {
-    if (search_for_default(s,path))
+    if (search_for_default(s,req.get_path()))
         return;
-    location_config loc = s.longest_prefix_match(path);
-    path = get_file_name(path, loc.get_prefix());
-    std::string file_name = loc.get_root() + path;
+    location_config loc = s.longest_prefix_match(req.get_path());
+    req.get_path() = get_file_name(req.get_path(), loc.get_prefix());
+    std::string file_name = loc.get_root() + req.get_path();
     if (isDir(file_name) && loc.get_autoindex() == "on")
     {
         autoindex(file_name, loc.get_prefix(), loc.get_root());
@@ -337,12 +336,17 @@ void Response::get_method(server_config &s,std::string path)
         set_status_code(403);
         return;
     }
+    if (get_file_ext(file_name) == "application/x-php" || get_file_ext(file_name) == "application/x-python")
+    {
+        // cgi 
+        return;
+    }
     this->body = file_name;
     this->content_lenght = fsize(file_name.c_str());
     get_headers(file_name);
     if (content_lenght + header.size() < SIZE_OF_BUFFER)
     {
-        std::cout << "Number" << content_lenght - header.size() << std::endl;
+        // std::cout << "Number" << content_lenght - header.size() << std::endl;
         this->is_complete = true;
     }
 }
@@ -382,7 +386,7 @@ Response::Response(server_config server, request &req)
     }
     if (req.get_method() == "GET")
     {
-        get_method(server, req.get_path());
+        get_method(server, req);
         generate_headers();
     }
     else if (req.get_method() == "DELETE")

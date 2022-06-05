@@ -38,7 +38,7 @@ class Response
         bool isDir(std::string path);
         std::vector<std::string> getfiles();
         void autoindex(std::string path, std::string prefix, std::string root);
-        void get_method(server_config &s,std::string path);
+        void get_method(server_config &s,request &req);
         void generate_headers();
         void delete_method(std::string filename);
         // int search_for_path(server_config &s,std::string path);

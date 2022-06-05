@@ -25,5 +25,6 @@
 # include "http/connection.hpp"
 # include "http/response.hpp"
 # include "http/server.hpp"
+# include "cgi/cgi.hpp"
 
 #endif

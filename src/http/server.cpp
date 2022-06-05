@@ -9,7 +9,6 @@ location_config::location_config()
 	this->methods = std::vector<std::string>();
 	this->autoindex = "";
 	this->default_file = "";
-	this->cgi_path = "";
 	this->upload_path = "";
 	this->prefix = "";
 }
@@ -21,7 +20,6 @@ location_config::location_config(const location_config &src)
 	this->methods = src.methods;
 	this->autoindex = src.autoindex;
 	this->default_file = src.default_file;
-	this->cgi_path = src.cgi_path;
 	this->upload_path = src.upload_path;
 	this->prefix = src.prefix;
 }
@@ -33,7 +31,6 @@ location_config &location_config::operator=(const location_config &src)
 	this->methods = src.methods;
 	this->autoindex = src.autoindex;
 	this->default_file = src.default_file;
-	this->cgi_path = src.cgi_path;
 	this->upload_path = src.upload_path;
 	this->prefix = src.prefix;
 	return *this;
@@ -68,11 +65,6 @@ std::string location_config::get_autoindex()
 std::string location_config::get_default_file()
 {
 	return (this->default_file);
-}
-
-std::string location_config::get_cgi_path()
-{
-	return (this->cgi_path);
 }
 
 std::string location_config::get_upload_path()
@@ -110,11 +102,6 @@ void location_config::set_default_file(std::string default_file)
 	this->default_file = default_file;
 }
 
-void location_config::set_cgi_path(std::string cgi_path)
-{
-	this->cgi_path = cgi_path;
-}
-
 void location_config::set_upload_path(std::string upload_path)
 {
 	this->upload_path = upload_path;
@@ -128,6 +115,11 @@ void location_config::set_prefix(std::string prefix)
 int server_config::get_fd_socket()
 {
 	return fd_socket;
+}
+
+void server_config::add_cgi_path(std::string key, std::string value)
+{
+	this->cgi_path.insert(std::make_pair(key, value));
 }
 
 //server
@@ -152,7 +144,7 @@ server_config::server_config(const server_config &src)
 	this->servers = src.servers;
 	this->locations = src.locations;
 	this->fd_socket = src.fd_socket;
-
+	this->cgi_path = src.cgi_path;
 }
 //assignment operator
 server_config &server_config::operator=(const server_config &src)
@@ -164,6 +156,7 @@ server_config &server_config::operator=(const server_config &src)
 	this->servers = src.servers;
 	this->locations = src.locations;
 	this->fd_socket = src.fd_socket;
+	this->cgi_path = src.cgi_path;
 	return (*this);
 }
 //destructor
@@ -237,6 +230,11 @@ void server_config::add_location(location_config location)
 	this->locations.push_back(location);
 }
 
+std::map<std::string, std::string> server_config::get_cgi_path()
+{
+	return (this->cgi_path);
+}
+
 int server_config::longest_match(std::string str, std::string needle)
 {
 	size_t i = 0;
@@ -289,9 +287,12 @@ location_config server_config::longest_prefix_match(std::string prefix)
 
 server_config get_server_by_host(std::vector<server_config> servers, std::string host)
 {
+	std::cout << "host: " << host << std::endl;
+	std::cout << "size: " << servers.size() << std::endl;
 	std::string host_name(split(host, ':')[0]);
 	if (is_ip(host_name))
 	{
+		std::cout << "IP" << std::endl;
 		for (size_t i = 0; i < servers.size(); i++)
 		{
 			server_config server = servers[i];
@@ -301,6 +302,7 @@ server_config get_server_by_host(std::vector<server_config> servers, std::string
 	}
 	else
 	{
+		std::cout << "HOST" << std::endl;
 		for (size_t i = 0; i < servers.size(); i++)
 		{
 			if (find_string(servers[i].get_servers(), host_name))
