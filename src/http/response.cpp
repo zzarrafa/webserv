@@ -221,7 +221,7 @@ void Response::autoindex(std::string path, std::string prefix, std::string root)
 void Response::generate_headers(server_config &s)
 {
     int len = 0;
-    if (is_cgi)
+    if (this->is_cgi)
     {
         std::cout << "CGI" << std::endl;
         header = "HTTP/1.1 200 Ok\r\n";
@@ -250,6 +250,48 @@ void Response::generate_headers(server_config &s)
         header += "Server: mywebserver\r\n";
         header += "Date: " + formatted_time() + "\r\n";
         header += "\r\n";
+        header += body;
+    }
+    else if (status_code == 500)
+    {
+        if (exists_test(remove_repeated_slashes(s.get_error_page() + "/500.html")))
+        {
+            std::cout << "500.html" << std::endl;
+            body = get_file_content(remove_repeated_slashes(s.get_error_page() + "/500.html"));
+            len = fsize(remove_repeated_slashes(s.get_error_page() + "/500.html").c_str());
+        }
+        else
+        {
+            body = "<html>\n<head><title>500 Internal Server Error</title></head>\n<body bgcolor='white'>\n<center><h1>500 Internal Server Error</h1></center>\n</body>\n</html>";
+            len = body.size();
+        }
+        header = "HTTP/1.1 500 Internal Server Error\r\n";
+	    header += "Content-Type: text/html\r\n";
+	    header += "Content-Length: "+ std::to_string(len) + "\r\n";
+	    header += "Server: mywebserver\r\n";
+	    header += "Date: " + formatted_time() + "\r\n";
+	    header += "\r\n";
+        header += body;
+    }
+    else if (status_code == 504)
+    {
+        if (exists_test(remove_repeated_slashes(s.get_error_page() + "/504.html")))
+        {
+            std::cout << "504.html" << std::endl;
+            body = get_file_content(remove_repeated_slashes(s.get_error_page() + "/504.html"));
+            len = fsize(remove_repeated_slashes(s.get_error_page() + "/504.html").c_str());
+        }
+        else
+        {
+            body = "<html>\n<head><title>504 Gateway Timeout</title></head>\n<body bgcolor='white'>\n<center><h1>504 Gateway Timeout</h1></center>\n</body>\n</html>";
+            len = body.size();
+        }
+        header = "HTTP/1.1 504 Gateway Timeout\r\n";
+	    header += "Content-Type: text/html\r\n";
+	    header += "Content-Length: "+ std::to_string(len) + "\r\n";
+	    header += "Server: mywebserver\r\n";
+	    header += "Date: " + formatted_time() + "\r\n";
+	    header += "\r\n";
         header += body;
     }
     else if (status_code == 404)
@@ -436,9 +478,11 @@ void Response::get_method(server_config &s, request &req)
 
         // std::cout << resultat.first << std::endl;
         this->body = resultat.first;
-        set_status_code(200);
         this->is_cgi = true;
-        std::cout << "done -> " << std::endl;
+        if (body.empty())
+            set_status_code(500);
+        else
+            set_status_code(200);
         return ;
     }
     this->body = file_name;
@@ -495,6 +539,11 @@ Response::Response(server_config server, request &req)
     else if (req.get_method() == "POST")
     {
         post_method(server, req);
+        generate_headers(server);
+    }
+    else
+    {
+        set_status_code(500);
         generate_headers(server);
     }
 }

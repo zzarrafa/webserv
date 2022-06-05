@@ -539,11 +539,8 @@ char    *get_buffer_with_headers(Response *rep, size_t *size)
 	strncpy(buf, rep->get_header().c_str(), rep->get_header().size());
 	size_t i = rep->get_header().size();
 	int j = 0;
-	std::cout << "file name: " << rep->get_body() << std::endl;
 	int fd = open(rep->get_body().c_str(), O_RDONLY);
 	int ret = read(fd, tmp, SIZE_OF_BUFFER - rep->get_header().size());
-	std::cout << "ret: " << ret << std::endl;
-	std::cout << "fd: " << fd << std::endl;
 	*size = ret + rep->get_header().size();
 	while (j < ret)
 	{

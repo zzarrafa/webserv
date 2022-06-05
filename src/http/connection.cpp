@@ -106,10 +106,10 @@ void connection::network_core(parsefile s)
 						char *buffer_new;
 						server_config tmp = get_server_by_host(server, serving_map[fd].get_host());
 						Response *rep = new Response(tmp, serving_map[fd]);
-						// rep->print_response();
-						usleep(6000);
 						if (!rep->get_is_file())
 						{
+							// std::cout << "here1" << std::endl;
+							usleep(6000);
 							write(fd, rep->get_header().c_str(), rep->get_header().size());
 							FD_CLR(fd, &copy_write);
 							serving_map.erase(fd);
@@ -118,6 +118,7 @@ void connection::network_core(parsefile s)
 						else if (response_map.find(fd) == response_map.end())
 						{
 							size_t size = 0;
+							// std::cout << "here2" << std::endl;
 							if (rep->get_is_complete())
 							{
 								buffer_new = get_buffer_with_headers(rep, &size);

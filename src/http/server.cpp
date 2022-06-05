@@ -287,12 +287,9 @@ location_config server_config::longest_prefix_match(std::string prefix)
 
 server_config get_server_by_host(std::vector<server_config> servers, std::string host)
 {
-	std::cout << "host: " << host << std::endl;
-	std::cout << "size: " << servers.size() << std::endl;
 	std::string host_name(split(host, ':')[0]);
 	if (is_ip(host_name))
 	{
-		std::cout << "IP" << std::endl;
 		for (size_t i = 0; i < servers.size(); i++)
 		{
 			server_config server = servers[i];
