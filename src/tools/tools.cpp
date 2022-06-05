@@ -401,6 +401,16 @@ bool exists_test (const std::string& name) {
     return f.good();
 }
 
+bool file_exists(std::string filename)
+{
+	int fd = open(filename.c_str(), O_RDONLY);
+	std::cout << "fd: >>>>" << fd << std::endl;
+	if (fd < 0)
+		return (false);
+	close(fd);
+	return (true);
+}
+
 bool is_path_exist(const std::string s)
 {
 	struct stat buffer;
@@ -462,7 +472,7 @@ int	first_carriage_return(char *buf, int size)
 
 bool is_valid_chunk(char *buf, int size, int debug)
 {
-	// print_binary(buf, size);
+	debug = 0;
 	int i = 2;
 	if (size > 5)
 	{
@@ -472,44 +482,23 @@ bool is_valid_chunk(char *buf, int size, int debug)
 		{
 			if (first_carriage_return(buf + i, size - i) < 7)
 			{
-				if (debug)
-				{
-					std::cout << "]->" << first_carriage_return(buf + i, size - i) << std::endl;
-					std::cout << "after: ";
-					printf("%c", buf[i]);
-					std::cout << std::endl;
-				}
-				std::cout << "chars: >";
 				while (i < size)
 				{
-					printf("%c", buf[i]);
 					if (buf[i] == '\r')
 					{
 						std::cout << "breeak" << std::endl;
 						break ;
 					}
 					if (!isxdigit(buf[i]))
-					{
-						if (debug)
-						{
-							std::cout << "false 1" << std::endl;
-						}
 						return false;
-					}
-
 					i++;
 				}
 				return true;
 			}
 			else
-			{
-				if (debug)
-					std::cout << "false 2" << std::endl;
 				return false;
-			}
 		}
 	}
-	// std::cout << "false 3" << std::endl;
 	return false;
 }
 
@@ -550,8 +539,11 @@ char    *get_buffer_with_headers(Response *rep, size_t *size)
 	strncpy(buf, rep->get_header().c_str(), rep->get_header().size());
 	size_t i = rep->get_header().size();
 	int j = 0;
+	std::cout << "file name: " << rep->get_body() << std::endl;
 	int fd = open(rep->get_body().c_str(), O_RDONLY);
 	int ret = read(fd, tmp, SIZE_OF_BUFFER - rep->get_header().size());
+	std::cout << "ret: " << ret << std::endl;
+	std::cout << "fd: " << fd << std::endl;
 	*size = ret + rep->get_header().size();
 	while (j < ret)
 	{
@@ -559,5 +551,39 @@ char    *get_buffer_with_headers(Response *rep, size_t *size)
 		i++;
 		j++;
 	}
+	close(fd);
 	return (buf);
+}
+
+std::string	remove_repeated_slashes(std::string path)
+{
+	std::string new_path = "";
+	for (size_t i = 0; i < path.size(); i++)
+	{
+		if (path[i] == '/')
+		{
+			if (i == 0 || path[i - 1] != '/')
+				new_path += '/';
+		}
+		else
+			new_path += path[i];
+	}
+	return (new_path);
+}
+
+std::string get_file_content(std::string path)
+{
+	std::string content = "";
+	std::ifstream file(path.c_str());
+	if (file.is_open())
+	{
+		std::string line;
+		while (getline(file, line))
+		{
+			content += line;
+			content += "\n";
+		}
+		file.close();
+	}
+	return (content);
 }

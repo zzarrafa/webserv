@@ -200,7 +200,6 @@ void request::check_if_complete()
 
 void request::check_headers()
 {
-    std::cout << "hahwa:" << this->_host << std::endl;
     if (this->_host == "none")
         this->_error_flag = 400;
     if (this->_method == "none")
@@ -228,12 +227,12 @@ request::request(char *buffer, int ret)
     this->_error_flag = 0;
     this->_offset = 0;
     this->_length = 0;
-    this->_encoding = "";
     this->_method = "none";
     this->_body = "none";
     this->_host = "none";
-    this->_type = "";
     this->_path = "none";
+    this->_encoding = "";
+    this->_type = "";
 
     while ((line = read_line(buffer, ret)).size())
     {
@@ -279,10 +278,7 @@ request::request(char *buffer, int ret)
     this->check_headers();
     this->check_if_complete();
     if (this->_is_complete || this->_error_flag != 0)
-    {
-        std::cout << "blan!!" << std::endl;
         return ;
-    }
     fill_body(buffer, 1, ret);
 }
 
@@ -305,36 +301,25 @@ int     request::read_hex(char *buffer, int *len)
     return hex_to_int(s);
 }
 
-int     calculate_hex(char *buffer)
+int     calculate_hex(char *buffer, int size)
 {
-    // std::cout << "calculate_hex" << std::endl;
     int i = 0;
-    while (buffer[i] != '\r')
+    while (i < size && buffer[i] != '\r')
         i++;
-    // int j = 0;
-    // std::cout << "[";
-    // while (j < i)
-        // std::cout << buffer[j++];
-    // std::cout << "]" << std::endl;
     return (i);
 }
 
 char    *request::clean_buffer(char *buffer, int ret, int *counter)
 {
-    // std::cout << "clean_buffer" << std::endl;
     int i = 0;
     *counter = 0;
     while (i < ret)
     {
         if (i + 5 < ret && buffer[i] == '\r' && buffer[i + 1] == '\n' && isxdigit(buffer[i + 2]))
         {
-            // std::cout << "before: ";
-            // printf("%c", buffer[i + 2]);
-            // std::cout << std::endl;
             if (is_valid_chunk(buffer + i, ret - i, 1))
             {
-                *counter += calculate_hex(buffer + i + 2);
-                // std::cout << "counter" << *counter << std::endl;
+                *counter += calculate_hex(buffer + i + 2, ret - i - 2);
                 *counter += 4;
                 i += *counter;
             }
@@ -344,12 +329,12 @@ char    *request::clean_buffer(char *buffer, int ret, int *counter)
     char *new_buffer = new char[ret - *counter];
     i = 0;
     int j = 0;
-    while (i < ret)
+    while (i < ret && j < ret - *counter)
     {
         if (i + 5 < ret && buffer[i] == '\r' && buffer[i + 1] == '\n' && isxdigit(buffer[i + 2]) && is_valid_chunk(buffer + i, ret - i, 0))
         {
             i += 2;
-            i += calculate_hex(buffer + i);
+            i += calculate_hex(buffer + i, ret - i);
             i += 2;
         }
         else
@@ -357,7 +342,6 @@ char    *request::clean_buffer(char *buffer, int ret, int *counter)
     }
     return (new_buffer);
 }
-
 
 void    request::fill_body(char *buffer, int flag, int ret)
 {
@@ -374,7 +358,6 @@ void    request::fill_body(char *buffer, int flag, int ret)
         if (this->_encoding == "chunked")
         {
             this->_chunk = read_hex(buffer, &len);
-            // std::cout << "to read: " << ret - this->_offset << std::endl;
             buffer += len + 2;
             this->_offset += len + 2;
             write(fd, buffer, ret - this->_offset);
@@ -385,7 +368,6 @@ void    request::fill_body(char *buffer, int flag, int ret)
     }
     else if (flag == 2)
     {
-        // std::cout << "to read: " << ret << std::endl;
         int counter = 0;
         char *new_buffer;
         if (this->_encoding == "chunked")

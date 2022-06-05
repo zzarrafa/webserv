@@ -23,6 +23,7 @@ void connection::network_core(parsefile s)
 		FD_SET(it->second, &readfds);
 		listOffd.push_back(it->second);
 		fdServer_map.insert(std::make_pair(it->second, get_servers_with_same_port(s, it->first)));
+		std::cout << "port: " << it->first << " fd: " << it->second << std::endl;
 		if (it->second > max)
 			max = it->second;
 	}
@@ -59,13 +60,10 @@ void connection::network_core(parsefile s)
 						int ret = read(fd, buffer, SIZE_OF_BUFFER);
 						if (ret == -1)
 						{
-							if (errno != EAGAIN)
-							{
-								close(fd);
-								FD_CLR(fd, &copy_read);
-								fdClient_map.erase(fd);
-								listOffd.erase(std::remove(listOffd.begin(), listOffd.end(), fd), listOffd.end());
-							}
+							close(fd);
+							FD_CLR(fd, &copy_read);
+							fdClient_map.erase(fd);
+							listOffd.erase(std::remove(listOffd.begin(), listOffd.end(), fd), listOffd.end());
 						}
 						else if (ret > 0)
 						{
@@ -108,15 +106,20 @@ void connection::network_core(parsefile s)
 						char *buffer_new;
 						server_config tmp = get_server_by_host(server, serving_map[fd].get_host());
 						Response *rep = new Response(tmp, serving_map[fd]);
-						std::cout << "here!!!" << std::endl;
-						serving_map[fd].print_request();
+						// rep->print_response();
 						usleep(6000);
-						if (response_map.find(fd) == response_map.end())
+						if (!rep->get_is_file())
+						{
+							write(fd, rep->get_header().c_str(), rep->get_header().size());
+							FD_CLR(fd, &copy_write);
+							serving_map.erase(fd);
+							close(fd);
+						}
+						else if (response_map.find(fd) == response_map.end())
 						{
 							size_t size = 0;
 							if (rep->get_is_complete())
 							{
-								// std::cout << "here! > 1" << std::endl;
 								buffer_new = get_buffer_with_headers(rep, &size);
 								write(fd, buffer_new, size);
 								FD_CLR(fd, &copy_write);
@@ -127,19 +130,8 @@ void connection::network_core(parsefile s)
 							{
 								buffer_new = get_buffer_with_headers(rep, &size);
 								response_map.insert(std::make_pair(fd, rep));
-								// std::cout << "size: " << size << std::endl;
 								rep->set_written(size - rep->get_header().size());
-								// print_binary(buffer_new, size);
 								write(fd, buffer_new, size);
-								// if (rep->get_content_lenght() - rep->get_written() <= 0)
-								// {
-									// std::cout << "here! > 2" << std::endl;
-									// std::cout << "///>" << rep->get_written() << std::endl;
-								// 	FD_CLR(fd, &copy_write);
-								// 	serving_map.erase(fd);
-								// 	response_map.erase(fd);
-								// 	close(fd);
-								// }
 							}
 						}
 						else

@@ -7,6 +7,7 @@ Response::Response()
     this->content_lenght = 0;
     this->written = 0;
     this->is_complete = false;
+    this->is_file = false;
 }
 
 Response::~Response()
@@ -14,7 +15,6 @@ Response::~Response()
 
 }
 
-//copy constructor
 Response::Response(const Response &src)
 {
     this->status_code = src.status_code;
@@ -24,19 +24,12 @@ Response::Response(const Response &src)
     this->body = src.body;
     this->header = src.header;
     this->status_code = src.status_code;
+    this->auto_index = src.auto_index;
+    this->written = src.written;
+    this->is_complete = src.is_complete;
+    this->is_file = src.is_file;
 }
 
-void Response::print_response()
-{
-    std::cout << "> Status code: " << this->status_code << std::endl;
-    std::cout << "> Status: " << this->status << std::endl;
-    std::cout << "> Content lenght: " << this->content_lenght << std::endl;
-    std::cout << "> Content type: " << this->content_type << std::endl;
-    std::cout << "> Body: " << this->body << std::endl;
-    std::cout << "> Header: " << this->header << std::endl;
-}
-
-// assignment operator
 Response &Response::operator=(const Response &src)
 {
     this->status_code = src.status_code;
@@ -46,6 +39,9 @@ Response &Response::operator=(const Response &src)
     this->body = src.body;
     this->header = src.header;
     this->status_code = src.status_code;
+    this->auto_index = src.auto_index;
+    this->written = src.written;
+    this->is_complete = src.is_complete;
     return (*this);
 }
 
@@ -58,46 +54,62 @@ void Response::set_status_code(int status)
 {
     this->status_code = status;
 }
+
 void Response::set_content_lenght(size_t cl)
 {
     this->content_lenght = cl;
 }
+
 void Response::set_content_type(std::string ct)
 {
     this->content_type = ct;
 }
+
 void Response::set_status(std::string status)
 {
     this->status = status;
 }
+
 int Response::get_status_code()
 {
     return status_code;
 }
+
 size_t Response::get_content_lenght()
 {
     return content_lenght;
 }
+
 std::string Response::get_content_type()
 {
     return content_type;
 }
+
 std::string Response::get_status()
 {
     return status;
 }
+
 std::string Response::get_header()
 {
     return header;
 }
+
 size_t Response::get_written()
 {
     return written;
 }
+
 void Response::set_written(size_t written)
 {
     this->written = written;
 }
+
+bool Response::get_is_file()
+{
+    return is_file;
+}
+
 bool Response::isDir(std::string path)
 {
     struct stat statbuf;
@@ -108,14 +120,27 @@ bool Response::isDir(std::string path)
 		return 0;
 	return S_ISDIR(statbuf.st_mode);
 }
+
 bool Response::get_is_complete()
 {
     return is_complete;
 }
+
 void Response::set_is_complete(bool is_complete)
 {
     this->is_complete = is_complete;
 }
+
+void Response::print_response()
+{
+    std::cout << "> Status code: " << this->status_code << std::endl;
+    std::cout << "> Status: " << this->status << std::endl;
+    std::cout << "> Content lenght: " << this->content_lenght << std::endl;
+    std::cout << "> Content type: " << this->content_type << std::endl;
+    std::cout << "> Body: " << this->body << std::endl;
+    std::cout << "> Header: " << this->header << std::endl;
+}
+
 void Response::get_file(std::string file_name)
 {
     std::ifstream f(file_name);
@@ -133,6 +158,7 @@ void Response::get_file(std::string file_name)
 	header += "\r\n";
     header += body;
 }
+
 int Response::search_for_default(server_config &s,std::string path)
 {
     std::vector<location_config> locations = s.get_locations();
@@ -184,16 +210,24 @@ void Response::autoindex(std::string path, std::string prefix, std::string root)
 	header += body;
 }
 
-
-void Response::generate_headers()
+void Response::generate_headers(server_config &s)
 {
+    int len = 0;
     if (status_code == 400)
     {
-
-        body = "<html>\n<head><title>400 Bad Request</title></head>\n<body bgcolor='white'>\n<center><h1>400 Bad Request</h1></center>\n</body>\n</html>";
+        if (exists_test(remove_repeated_slashes(s.get_error_page() + "/400.html")))
+        {
+            body = get_file_content(remove_repeated_slashes(s.get_error_page() + "/400.html"));
+            len = fsize(remove_repeated_slashes(s.get_error_page() + "/400.html").c_str());
+        }
+        else
+        {
+            body = "<html>\n<head><title>400 Bad Request</title></head>\n<body bgcolor='white'>\n<center><h1>400 Not Found</h1></center>\n</body>\n</html>";
+            len = body.size();
+        }
         header = "HTTP/1.1 400 Bad Request\r\n";
         header += "Content-Type: text/html\r\n";
-        header += "Content-Length: " + std::to_string(body.size()) + "\r\n";
+        header += "Content-Length: " + std::to_string(len) + "\r\n";
         header += "Server: mywebserver\r\n";
         header += "Date: " + formatted_time() + "\r\n";
         header += "\r\n";
@@ -201,10 +235,20 @@ void Response::generate_headers()
     }
     else if (status_code == 404)
     {
-        body = "<html>\n<head><title>404 Not Found</title></head>\n<body bgcolor='white'>\n<center><h1>404 Not Found</h1></center>\n</body>\n</html>";
+        if (exists_test(remove_repeated_slashes(s.get_error_page() + "/404.html")))
+        {
+            std::cout << "404.html" << std::endl;
+            body = get_file_content(remove_repeated_slashes(s.get_error_page() + "/404.html"));
+            len = fsize(remove_repeated_slashes(s.get_error_page() + "/404.html").c_str());
+        }
+        else
+        {
+            body = "<html>\n<head><title>404 Not Found</title></head>\n<body bgcolor='white'>\n<center><h1>404 Not Found</h1></center>\n</body>\n</html>";
+            len = body.size();
+        }
         header = "HTTP/1.1 404 Not Found\r\n";
 	    header += "Content-Type: text/html\r\n";
-	    header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
+	    header += "Content-Length: "+ std::to_string(len) + "\r\n";
 	    header += "Server: mywebserver\r\n";
 	    header += "Date: " + formatted_time() + "\r\n";
 	    header += "\r\n";
@@ -212,10 +256,19 @@ void Response::generate_headers()
     }
     else if (status_code == 405)
     {
-        body = "<html>\n<head><title>405 Method Not Allowed</title></head>\n<body bgcolor='white'>\n<center><h1>405 Method Not Allowed</h1></center>\n</body>\n</html>";
+        if (exists_test(remove_repeated_slashes(s.get_error_page() + "/405.html")))
+        {
+            body = get_file_content(remove_repeated_slashes(s.get_error_page() + "/405.html"));
+            len = fsize(remove_repeated_slashes(s.get_error_page() + "/405.html").c_str());
+        }
+        else
+        {
+            body = "<html>\n<head><title>405 Method Not Allowed</title></head>\n<body bgcolor='white'>\n<center><h1>405 Method Not Allowed</h1></center>\n</body>\n</html>";
+            len = body.size();
+        }
         header = "HTTP/1.1 405 Method Not Allowed\r\n";
 	    header += "Content-Type: text/html\r\n";
-	    header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
+	    header += "Content-Length: "+ std::to_string(len) + "\r\n";
 	    header += "Server: mywebserver\r\n";
 	    header += "Date: " + formatted_time() + "\r\n";
 	    header += "\r\n";
@@ -223,10 +276,19 @@ void Response::generate_headers()
     }
     else if ( status_code == 403)
     {
-        body = "<html>\n<head><title>403 Forbidden</title></head>\n<body bgcolor='white'>\n<center><h1>403 Forbidden</h1></center>\n</body>\n</html>";
+        if (exists_test(remove_repeated_slashes(s.get_error_page() + "/403.html")))
+        {
+            body = get_file_content(remove_repeated_slashes(s.get_error_page() + "/403.html"));
+            len = fsize(remove_repeated_slashes(s.get_error_page() + "/403.html").c_str());
+        }
+        else
+        {
+            body = "<html>\n<head><title>403 Forbidden</title></head>\n<body bgcolor='white'>\n<center><h1>403 Forbidden</h1></center>\n</body>\n</html>";
+            len = body.size();
+        }
         header = "HTTP/1.1 403 Forbidden\r\n";
 	    header += "Content-Type: text/html\r\n";
-	    header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
+	    header += "Content-Length: "+ std::to_string(len) + "\r\n";
 	    header += "Server: mywebserver\r\n";
 	    header += "Date: " + formatted_time() + "\r\n";
 	    header += "\r\n";
@@ -234,47 +296,60 @@ void Response::generate_headers()
     }
     else if (status_code == 409)
     {
-        body = "<html>\n<head><title>409 Conflict</title></head>\n<body bgcolor='white'>\n<center><h1>409 Conflict</h1></center>\n</body>\n</html>";
+        if (exists_test(remove_repeated_slashes(s.get_error_page() + "/409.html")))
+        {
+            body = get_file_content(remove_repeated_slashes(s.get_error_page() + "/409.html"));
+            len = fsize(remove_repeated_slashes(s.get_error_page() + "/409.html").c_str());
+        }
+        else
+        {
+            body = "<html>\n<head><title>409 Conflict</title></head>\n<body bgcolor='white'>\n<center><h1>409 Conflict</h1></center>\n</body>\n</html>";
+            len = body.size();
+        }
         header = "HTTP/1.1 409 Conflict\r\n";
 	    header += "Content-Type: text/html\r\n";
-	    header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
+	    header += "Content-Length: "+ std::to_string(len) + "\r\n";
 	    header += "Server: mywebserver\r\n";
 	    header += "Date: " + formatted_time() + "\r\n";
 	    header += "\r\n";
+    }
+    else if (status_code == 413)
+    {
+        if (exists_test(remove_repeated_slashes(s.get_error_page() + "/413.html")))
+        {
+            body = get_file_content(remove_repeated_slashes(s.get_error_page() + "/413.html"));
+            len = fsize(remove_repeated_slashes(s.get_error_page() + "/413.html").c_str());
+        }
+        else
+        {
+            body = "<html>\n<head><title>413 Request Entity Too Large</title></head>\n<body bgcolor='white'>\n<center><h1>413 Request Entity Too Large</h1></center>\n</body>\n</html>";
+            len = body.size();
+        }
+        header = "HTTP/1.1 413 Request Entity Too Large\r\n";
+        header += "Content-Type: text/html\r\n";
+        header += "Content-Length: " + std::to_string(len) + "\r\n";
+        header += "Server: mywebserver\r\n";
+        header += "Date: " + formatted_time() + "\r\n";
+        header += "\r\n";
         header += body;
     }
     else if (status_code == 201)
     {
-        body = "<html>\n<head><title>201 Created</title></head>\n<body bgcolor='white'>\n<center><h1>201 Created</h1></center>\n</body>\n</html>";
         header = "HTTP/1.1 201 Created\r\n";
 	    header += "Content-Type: text/html\r\n";
-	    header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
-	    header += "Server: mywebserver\r\n";
+        header += "Content-Length: 0\r\n";
+        header += "Server: mywebserver\r\n";
 	    header += "Date: " + formatted_time() + "\r\n";
 	    header += "\r\n";
-        header += body;
     }
     else if (status_code == 200)
     {
-        body = "<html>\n<head><title>200 Ok</title></head>\n<body bgcolor='white'>\n<center><h1>200 Ok</h1></center>\n</body>\n</html>";
         header = "HTTP/1.1 200 Ok\r\n";
 	    header += "Content-Type: text/html\r\n";
-	    header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
+	    header += "Content-Length: 0\r\n";
 	    header += "Server: mywebserver\r\n";
 	    header += "Date: " + formatted_time() + "\r\n";
 	    header += "\r\n";
-        header += body;
-    }
-    else if (status_code == 413)
-    {
-        body = "<html>\n<head><title>413 Request Entity Too Large</title></head>\n<body bgcolor='white'>\n<center><h1>413 Request Entity Too Large</h1></center>\n</body>\n</html>";
-        header = "HTTP/1.1 413 Request Entity Too Large\r\n";
-	    header += "Content-Type: text/html\r\n";
-	    header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
-	    header += "Server: mywebserver\r\n";
-	    header += "Date: " + formatted_time() + "\r\n";
-	    header += "\r\n";
-        header += body;
     }
 }
 
@@ -315,7 +390,7 @@ void Response::get_method(server_config &s, request &req)
         return;
     location_config loc = s.longest_prefix_match(req.get_path());
     req.get_path() = get_file_name(req.get_path(), loc.get_prefix());
-    std::string file_name = loc.get_root() + req.get_path();
+    std::string file_name = remove_repeated_slashes(loc.get_root() + req.get_path());
     if (isDir(file_name) && loc.get_autoindex() == "on")
     {
         autoindex(file_name, loc.get_prefix(), loc.get_root());
@@ -338,17 +413,15 @@ void Response::get_method(server_config &s, request &req)
     }
     if (get_file_ext(file_name) == "application/x-php" || get_file_ext(file_name) == "application/x-python")
     {
-        // cgi 
+        // cgi
         return;
     }
     this->body = file_name;
     this->content_lenght = fsize(file_name.c_str());
+    this->is_file = true;
     get_headers(file_name);
     if (content_lenght + header.size() < SIZE_OF_BUFFER)
-    {
-        // std::cout << "Number" << content_lenght - header.size() << std::endl;
         this->is_complete = true;
-    }
 }
 
 void Response::post_method(server_config &s, request &req)
@@ -381,28 +454,22 @@ Response::Response(server_config server, request &req)
     if (req.get_error_flag() == 400)
     {
         set_status_code(400);
-        generate_headers();
+        generate_headers(server);
         return;
     }
     if (req.get_method() == "GET")
     {
         get_method(server, req);
-        generate_headers();
+        generate_headers(server);
     }
     else if (req.get_method() == "DELETE")
     {
         delete_method(server ,req.get_path());
-        generate_headers();
+        generate_headers(server);
     }
     else if (req.get_method() == "POST")
     {
         post_method(server, req);
-        generate_headers();
-    }
-    else
-    {
-        set_status_code(400);
-        generate_headers();
+        generate_headers(server);
     }
 }
-

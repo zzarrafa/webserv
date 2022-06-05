@@ -40,5 +40,7 @@ void print_binary(char *s, int len);
 std::string read_line(char *buffer, size_t size);
 char    *get_buffer(size_t written, size_t len, std::string file, size_t *size);
 char    *get_buffer_with_headers(Response *rep, size_t *size);
-
+std::string remove_repeated_slashes(std::string path);
+bool file_exists(std::string filename);
+std::string get_file_content(std::string path);
 #endif

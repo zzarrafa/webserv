@@ -1,7 +1,7 @@
 #ifndef CONNECTION_HPP
 #define CONNECTION_HPP
 
-#define SIZE_OF_BUFFER 10000
+#define SIZE_OF_BUFFER 15000
 
 #include "../webserv.hpp"
 

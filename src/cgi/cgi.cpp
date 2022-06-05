@@ -108,9 +108,10 @@ char **arguments(std::string cgi, std::string path)
   zbi[1] = strdup(path.c_str());
   zbi[2] = NULL;
   return zbi;
-} 
+}
+
 std::pair<std::string, std::map<std::string, std::string> > Cgi::execution(std::string path, request &req, std::string cgipathto)
-{  
+{
 
     char **args = arguments(cgipathto, path);
     std::cout << "  " << req.get_header("Content-type") << std::endl;

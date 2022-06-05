@@ -15,6 +15,7 @@ class Response
         std::string auto_index;
         size_t written;
         bool is_complete;
+        bool is_file;
 
     public:
         Response();
@@ -39,7 +40,7 @@ class Response
         std::vector<std::string> getfiles();
         void autoindex(std::string path, std::string prefix, std::string root);
         void get_method(server_config &s,request &req);
-        void generate_headers();
+        void generate_headers(server_config &s);
         void delete_method(std::string filename);
         // int search_for_path(server_config &s,std::string path);
         std::string get_header();
@@ -53,6 +54,7 @@ class Response
         void    set_written(size_t written);
         void    set_is_complete(bool is_complete);
         bool    get_is_complete();
+        bool    get_is_file();
 };
 
 
