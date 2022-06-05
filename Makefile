@@ -8,6 +8,7 @@ SRCS =	src/webserv.cpp\
 		src/http/server.cpp\
 		src/parser/parsefile.cpp\
 		src/tools/tools.cpp\
+		src/cgi/cgi.cpp
 
 all: $(NAME)
 

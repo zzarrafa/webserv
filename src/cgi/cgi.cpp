@@ -21,7 +21,7 @@ std::pair<std::string, std::map<std::string, std::string> > outtputt(std::string
       line = Trim(line, chars);
       if(line.length() > 0 )
       {
-        tab = split(line, ': ');
+        tab = split(line, ':');
         if (tab[0] == "Set-Cookie")
         {
           headers[tab[0]] = Trim(tab[1], chars);
@@ -43,6 +43,7 @@ std::pair<std::string, std::map<std::string, std::string> > outtputt(std::string
   }
   ret.first = outputcontent;
   ret.second = headers;
+  // std::cout << "outputcontent: " << outputcontent << std::endl;
   return ret;
 }
 
@@ -51,9 +52,8 @@ std::pair <std::string, std::map<std::string, std::string> > executi_cgi(request
 {
   int fd[2];
   int nfd[2];
-  int status;
+  //int status;
   char c;
-  std::string cgioutputt = "";
   if(pipe(fd) == -1)
   {
     std::cerr << "pipe error" << std::endl;
@@ -73,13 +73,13 @@ std::pair <std::string, std::map<std::string, std::string> > executi_cgi(request
   if (pid > 0)
   {
     close(fd[1]);
-    close(nfd[1]);
     close(fd[0]);
+    close(nfd[1]);
     FILE *result;
     result = fdopen(nfd[0], "r"); 
     while((c = fgetc(result)) != EOF)
-    {
-      cgioutputt += c;
+    { 
+      output += c;
     }
     fclose(result);
     close(nfd[0]);
@@ -87,9 +87,9 @@ std::pair <std::string, std::map<std::string, std::string> > executi_cgi(request
   }
     else if (pid == 0)
     {
-      write(fd[1], req.get_body().data(), req.get_body().size());
+        write(fd[1], req.get_body().data(), req.get_body().size());
       dup2(nfd[1],1);
-      dup2(fd[0],1);
+      dup2(fd[0],0);
       close(fd[1]);
       close(fd[0]);
       close(nfd[1]);
@@ -98,7 +98,8 @@ std::pair <std::string, std::map<std::string, std::string> > executi_cgi(request
        //function is not specified in POSIX.1; according to POSIX.1, the
        //environment should be accessed via the external variable environ(7)" alkitab almo9adaass: man(2) execve;
     }
-    return outtputt(cgioutputt);
+    std::cout << "INA FD " <<  nfd[0] << std::endl; 
+    return outtputt(output);
 }
 
 char **arguments(std::string cgi, std::string path)
@@ -108,13 +109,10 @@ char **arguments(std::string cgi, std::string path)
   zbi[1] = strdup(path.c_str());
   zbi[2] = NULL;
   return zbi;
-}
-
+} 
 std::pair<std::string, std::map<std::string, std::string> > Cgi::execution(std::string path, request &req, std::string cgipathto)
-{
-
+{  
     char **args = arguments(cgipathto, path);
-    std::cout << "  " << req.get_header("Content-type") << std::endl;
     if(req.get_method() == "POST")
     {
       if (!req.get_header("Content-Type").empty())
@@ -123,7 +121,7 @@ std::pair<std::string, std::map<std::string, std::string> > Cgi::execution(std::
     if(!req.get_body().empty())
       setenv("CONTENT_LENGTH", std::to_string(req.get_body().size()).c_str(),1);
     if (!req.get_method().empty())
-    setenv("REQUEST_METHOD",req.get_method().c_str(),1 );
+        setenv("REQUEST_METHOD",req.get_method().c_str(),1 );
     setenv("REDIRECT_STATUS", "true" , 1);
     setenv("SCRIPT_FILENAME", path.c_str(), 1);
     setenv("GATEWAY_INTERFACE", "CGI/1.1", 1);

@@ -28,6 +28,7 @@ Response::Response(const Response &src)
     this->written = src.written;
     this->is_complete = src.is_complete;
     this->is_file = src.is_file;
+    this->is_cgi = src.is_cgi;
 }
 
 Response &Response::operator=(const Response &src)
@@ -42,6 +43,8 @@ Response &Response::operator=(const Response &src)
     this->auto_index = src.auto_index;
     this->written = src.written;
     this->is_complete = src.is_complete;
+    this->is_file = src.is_file;
+    this->is_cgi = src.is_cgi;
     return (*this);
 }
 
@@ -131,6 +134,11 @@ void Response::set_is_complete(bool is_complete)
     this->is_complete = is_complete;
 }
 
+bool Response::get_is_cgi()
+{
+    return is_cgi;
+}
+
 void Response::print_response()
 {
     std::cout << "> Status code: " << this->status_code << std::endl;
@@ -213,7 +221,18 @@ void Response::autoindex(std::string path, std::string prefix, std::string root)
 void Response::generate_headers(server_config &s)
 {
     int len = 0;
-    if (status_code == 400)
+    if (is_cgi)
+    {
+        std::cout << "CGI" << std::endl;
+        header = "HTTP/1.1 200 Ok\r\n";
+        header += "Content-Length: " + std::to_string(body.size()) + "\r\n";
+	    header += "Server: mywebserver\r\n";
+	    header += "Date: " + formatted_time() + "\r\n";
+	    header += "\r\n";
+        std::cout << body.size() << std::endl;
+        header += body;
+    }
+    else if (status_code == 400)
     {
         if (exists_test(remove_repeated_slashes(s.get_error_page() + "/400.html")))
         {
@@ -411,10 +430,16 @@ void Response::get_method(server_config &s, request &req)
         set_status_code(403);
         return;
     }
-    if (get_file_ext(file_name) == "application/x-php" || get_file_ext(file_name) == "application/x-python")
+    if (get_file_type(file_name) == "application/x-php" || get_file_type(file_name) == "application/x-python")
     {
-        // cgi
-        return;
+        std::pair<std::string, std::map<std::string, std::string> >resultat = Cgi::execution(file_name.c_str(), req, "/Users/sel-fcht/Desktop/latest6.0/src/cgi-bin/php-cgi");
+
+        // std::cout << resultat.first << std::endl;
+        this->body = resultat.first;
+        set_status_code(200);
+        this->is_cgi = true;
+        std::cout << "done -> " << std::endl;
+        return ;
     }
     this->body = file_name;
     this->content_lenght = fsize(file_name.c_str());

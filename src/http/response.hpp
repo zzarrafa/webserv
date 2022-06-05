@@ -16,6 +16,7 @@ class Response
         size_t written;
         bool is_complete;
         bool is_file;
+        bool is_cgi;
 
     public:
         Response();
@@ -55,6 +56,7 @@ class Response
         void    set_is_complete(bool is_complete);
         bool    get_is_complete();
         bool    get_is_file();
+        bool    get_is_cgi();
 };
 
 
