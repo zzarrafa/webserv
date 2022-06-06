@@ -75,6 +75,7 @@ void connection::network_core(parsefile s)
 									FD_SET(fd, &copy_write);
 									FD_CLR(fd, &copy_read);
 									serving_map.insert(std::make_pair(fd, req));
+									// req.print_request();
 								}
 								else
 									chunking_map.insert(std::make_pair(fd, req));
@@ -109,7 +110,7 @@ void connection::network_core(parsefile s)
 						if (!rep->get_is_file())
 						{
 							// std::cout << "here1" << std::endl;
-							usleep(6000);
+							// usleep(6000);
 							write(fd, rep->get_header().c_str(), rep->get_header().size());
 							FD_CLR(fd, &copy_write);
 							serving_map.erase(fd);

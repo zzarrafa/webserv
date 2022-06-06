@@ -191,12 +191,15 @@ int Response::search_for_default(server_config &s,std::string path)
 
 void Response::autoindex(std::string path, std::string prefix, std::string root)
 {
+    // std::cout << "auto index" << std::endl;
     std::vector<Fileinfos> file = listofFiles(path);
+    // std::cout << root << std::endl;
     std::string	body = "<html lang='en'>\n<head>\n<title>Document</title>\n</head>\n<body>\n<h1>Index OF "+ path + " </h1>\n<br>\n<table width=\"100%\">\n<hr>";
     this->auto_index = get_file_name(path, root);
     for(size_t i =0; i < file.size(); i++)
     {
-        std::string td = "<tr><td width=\"50%\"> <a href=\"" + prefix + this->auto_index + "/" + file[i].file_name +"\"> "+file[i].file_name + "</a></td>"  ;
+        // std::cout << prefix + this->auto_index + "/" + file[i].file_name << std::endl;
+        std::string td = "<tr><td width=\"50%\"> <a href=\"" + remove_repeated_slashes(prefix + this->auto_index + "/" + file[i].file_name) +"\"> "+file[i].file_name + "</a></td>"  ;
 		body += td;
 		if (file[i].file_name == ".." || file[i].file_name == ".")
 			continue;
@@ -430,19 +433,21 @@ void Response::delete_method(server_config &s, std::string path)
     location_config loc = s.longest_prefix_match(path);
     path = get_file_name(path, loc.get_prefix());
     file_name = loc.get_root() + path;
-    for (size_t i = 0 ; i < loc.get_methods().size();i++)
-    {
-        std::cout << loc.get_methods()[i] << std::endl;
-    }
     if (!find_string(loc.get_methods(),"DELETE"))
     {
         set_status_code(405);
         return;
     }
-    if (std::remove(file_name.c_str()))
-        set_status_code(404);
+    if (file_exists(file_name.c_str()))
+    {
+        if (std::remove(file_name.c_str()) < 0)
+            set_status_code(403);
+        else
+            set_status_code(200);
+
+    }
     else
-        set_status_code(200);
+        set_status_code(404);
 }
 
 void Response::get_method(server_config &s, request &req)
@@ -450,33 +455,40 @@ void Response::get_method(server_config &s, request &req)
     if (search_for_default(s,req.get_path()))
         return;
     location_config loc = s.longest_prefix_match(req.get_path());
-    req.get_path() = get_file_name(req.get_path(), loc.get_prefix());
-    std::string file_name = remove_repeated_slashes(loc.get_root() + req.get_path());
+    // req.get_path() = get_file_name(req.get_path(), loc.get_prefix());
+    std::cout << "root> " << loc.get_root() << std::endl;
+    std::cout << "path> " << req.get_path() << std::endl;
+    std::cout << "prefix> " << loc.get_prefix() << std::endl;
+    std::string file_name = remove_repeated_slashes(loc.get_root() + get_file_name(req.get_path(), loc.get_prefix()));
+    std::cout << "file>>> " << file_name << std::endl;
     if (isDir(file_name) && loc.get_autoindex() == "on")
     {
         autoindex(file_name, loc.get_prefix(), loc.get_root());
         return;
     }
-    if (!exists_test(file_name))
+    else if (access(file_name.c_str(), R_OK) == -1 && access(file_name.c_str(), F_OK) == 0)
+    {
+        set_status_code(403);
+        return ;
+    }
+    else if (access(file_name.c_str(), F_OK) == -1)
     {
         set_status_code(404);
-        return;
+        return ;
     }
-    if (!find_string(loc.get_methods(),"GET"))
+    else if ((isDir(file_name) && loc.get_autoindex() == "off"))
+    {
+        set_status_code(403);
+        return ;
+    }
+    else if (!find_string(loc.get_methods(),"GET"))
     {
         set_status_code(405);
         return;
     }
-    if (isDir(file_name) && loc.get_autoindex() == "off")
-    {
-        set_status_code(403);
-        return;
-    }
-    if (get_file_type(file_name) == "application/x-php" || get_file_type(file_name) == "application/x-python")
+    else if (get_file_type(file_name) == "application/x-php" || get_file_type(file_name) == "application/x-python")
     {
         std::pair<std::string, std::map<std::string, std::string> >resultat = Cgi::execution(file_name.c_str(), req, "/Users/sel-fcht/Desktop/latest6.0/src/cgi-bin/php-cgi");
-
-        // std::cout << resultat.first << std::endl;
         this->body = resultat.first;
         this->is_cgi = true;
         if (body.empty())

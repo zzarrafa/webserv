@@ -81,7 +81,7 @@ int create_server(int port)
 		perror("bind failed");
 		exit(EXIT_FAILURE);
 	}
-	if (listen(fd_socket, 3) < 0)
+	if (listen(fd_socket, 1000) < 0)
 	{
 		perror("listen");
 		exit(EXIT_FAILURE);
@@ -241,7 +241,7 @@ std::string     get_file_type(std::string type)
 		else if (res == ".cpp") return "application/x-c++";
 		else if (res == ".c") return "application/x-c";
 	}
-    return "Plain Text";
+    return "plain/text";
 }
 
 std::string     get_file_ext(std::string res)
@@ -442,7 +442,13 @@ bool find_string(std::vector<std::string> vec, std::string str)
 
 std::string get_file_name(std::string path, std::string prefix)
 {
-	return std::string((strdup(path.c_str()) + prefix.size()));
+	char *tmp = strdup(path.c_str());
+	tmp += prefix.size();
+	// std::cout << "9lawi" << prefix << std::endl;
+	// std::cout << "size :" << prefix.size() << std::endl;
+	// std::cout << "path inside getfile" << path << std::endl;
+	// std::cout << "tmp: " << tmp << std::endl;
+	return std::string(tmp);
 }
 
 std::map<int, int> switch_map(std::map<int, int> map)
