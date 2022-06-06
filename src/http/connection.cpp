@@ -119,12 +119,12 @@ void connection::network_core(parsefile s)
 						else if (response_map.find(fd) == response_map.end())
 						{
 							size_t size = 0;
-							// std::cout << "here2" << std::endl;
 							if (rep->get_is_complete())
 							{
 								buffer_new = get_buffer_with_headers(rep, &size);
 								write(fd, buffer_new, size);
 								FD_CLR(fd, &copy_write);
+								free(buffer_new);
 								serving_map.erase(fd);
 								close(fd);
 							}
@@ -134,6 +134,7 @@ void connection::network_core(parsefile s)
 								response_map.insert(std::make_pair(fd, rep));
 								rep->set_written(size - rep->get_header().size());
 								write(fd, buffer_new, size);
+								free(buffer_new);
 							}
 						}
 						else
@@ -141,6 +142,7 @@ void connection::network_core(parsefile s)
 							size_t size = 0;
 							buffer_new = get_buffer(response_map[fd]->get_written(), response_map[fd]->get_content_lenght(), response_map[fd]->get_body(), &size);
 							write(fd, buffer_new, size);
+							free(buffer_new);
 							response_map[fd]->set_written(size + response_map[fd]->get_written());
 							if (response_map[fd]->get_written() >= response_map[fd]->get_content_lenght())
 							{

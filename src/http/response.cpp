@@ -496,6 +496,7 @@ void Response::get_method(server_config &s, request &req)
         else
             set_status_code(200);
         return ;
+        // cgi code here
     }
     this->body = file_name;
     this->content_lenght = fsize(file_name.c_str());
