@@ -1,5 +1,5 @@
 NAME = webserv
-FLAGS = -std=c++98 -Wall -Wextra -Werror -g -fsanitize=address
+FLAGS = -std=c++98 -Wall -Wextra -Werror #-g -fsanitize=address
 
 SRCS =	src/webserv.cpp\
 		src/http/connection.cpp\

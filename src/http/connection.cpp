@@ -14,6 +14,7 @@ void connection::network_core(parsefile s)
 	fd_set writefds;
 	fd_set readfds;
 	int max = 0;
+	int flag = 0;
 
 	FD_ZERO(&readfds);
 	FD_ZERO(&writefds);
@@ -75,7 +76,6 @@ void connection::network_core(parsefile s)
 									FD_SET(fd, &copy_write);
 									FD_CLR(fd, &copy_read);
 									serving_map.insert(std::make_pair(fd, req));
-									// req.print_request();
 								}
 								else
 									chunking_map.insert(std::make_pair(fd, req));
@@ -85,6 +85,9 @@ void connection::network_core(parsefile s)
 								chunking_map[fd].fill_body(buffer, 2, ret);
 								if (chunking_map[fd].get_is_complete())
 								{
+									std::cout << "------------------------request------------------------" << std::endl;
+									chunking_map[fd].print_request();
+									std::cout << "-------------------------------------------------------" << std::endl;
 									FD_SET(fd, &copy_write);
 									FD_CLR(fd, &copy_read);
 									serving_map.insert(std::make_pair(fd, chunking_map[fd]));
@@ -106,14 +109,45 @@ void connection::network_core(parsefile s)
 					{
 						char *buffer_new;
 						server_config tmp = get_server_by_host(server, serving_map[fd].get_host());
+						if (response_map.find(fd) != response_map.end())
+						{
+							std::cout << "first!" << std::endl;
+							size_t size = 0;
+							buffer_new = get_buffer(response_map[fd]->get_written(), response_map[fd]->get_content_lenght(), response_map[fd]->get_body(), &size);
+							write(fd, buffer_new, size);
+							// std::cout << "Sec time!" << std::endl;
+							free(buffer_new);
+							flag++;
+							// std::cout << "Body: " << response_map[fd]->get_body() << std::endl;
+							// std::cout << "Header: " << response_map[fd]->get_header() << std::endl;
+							response_map[fd]->get_body();
+							// if (flag == 3)
+							// {
+							// 	int x;
+							// 	std::cin >> x;
+							// }
+							response_map[fd]->set_written(size + response_map[fd]->get_written());
+							if (response_map[fd]->get_written() >= response_map[fd]->get_content_lenght())
+							{
+								FD_CLR(fd, &copy_write);
+								// std::cout << "Done!" << std::endl;
+								delete response_map[fd];
+								serving_map.erase(fd);
+								response_map.erase(fd);
+								close(fd);
+							}
+							continue;
+						}
 						Response *rep = new Response(tmp, serving_map[fd]);
 						if (!rep->get_is_file())
 						{
-							// std::cout << "here1" << std::endl;
-							// usleep(6000);
+							std::cout << "------------------------response-----------------------" << std::endl;
+							rep->print_response();
+							std::cout << "-------------------------------------------------------" << std::endl;
 							write(fd, rep->get_header().c_str(), rep->get_header().size());
 							FD_CLR(fd, &copy_write);
 							serving_map.erase(fd);
+							delete rep;
 							close(fd);
 						}
 						else if (response_map.find(fd) == response_map.end())
@@ -126,6 +160,7 @@ void connection::network_core(parsefile s)
 								FD_CLR(fd, &copy_write);
 								free(buffer_new);
 								serving_map.erase(fd);
+								delete rep;
 								close(fd);
 							}
 							else
@@ -135,23 +170,6 @@ void connection::network_core(parsefile s)
 								rep->set_written(size - rep->get_header().size());
 								write(fd, buffer_new, size);
 								free(buffer_new);
-							}
-						}
-						else
-						{
-							size_t size = 0;
-							buffer_new = get_buffer(response_map[fd]->get_written(), response_map[fd]->get_content_lenght(), response_map[fd]->get_body(), &size);
-							write(fd, buffer_new, size);
-
-							free(buffer_new);
-							response_map[fd]->set_written(size + response_map[fd]->get_written());
-							if (response_map[fd]->get_written() >= response_map[fd]->get_content_lenght())
-							{
-								FD_CLR(fd, &copy_write);
-								delete response_map[fd];
-								serving_map.erase(fd);
-								response_map.erase(fd);
-								close(fd);
 							}
 						}
 					}

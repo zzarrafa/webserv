@@ -12,40 +12,25 @@ Response::Response()
 
 Response::~Response()
 {
-
+    std::cout << ">>>>>>>>>>>>>>>Response destructor called" << std::endl;
 }
 
 Response::Response(const Response &src)
 {
-    this->status_code = src.status_code;
-    this->status = src.status;
-    this->content_lenght = src.content_lenght;
-    this->content_type = src.content_type;
-    this->body = src.body;
-    this->header = src.header;
-    this->status_code = src.status_code;
-    this->auto_index = src.auto_index;
-    this->written = src.written;
-    this->is_complete = src.is_complete;
-    this->is_file = src.is_file;
-    this->is_cgi = src.is_cgi;
+    *this = src;
 }
 
 Response &Response::operator=(const Response &src)
 {
     this->status_code = src.status_code;
-    this->status = src.status;
-    this->content_lenght = src.content_lenght;
-    this->content_type = src.content_type;
-    this->body = src.body;
-    this->header = src.header;
-    this->status_code = src.status_code;
     this->auto_index = src.auto_index;
+    this->content_lenght = src.content_lenght;
     this->written = src.written;
     this->is_complete = src.is_complete;
     this->is_file = src.is_file;
-    this->is_cgi = src.is_cgi;
-    return (*this);
+    this->header = src.header;
+    this->body = src.body;
+    return *this;
 }
 
 std::string Response::get_body()
@@ -399,6 +384,7 @@ void Response::generate_headers(server_config &s)
     }
     else if (status_code == 201)
     {
+        std::cout << "201.html" << std::endl;
         header = "HTTP/1.1 201 Created\r\n";
 	    header += "Content-Type: text/html\r\n";
         header += "Content-Length: 0\r\n";
@@ -455,12 +441,7 @@ void Response::get_method(server_config &s, request &req)
     if (search_for_default(s,req.get_path()))
         return;
     location_config loc = s.longest_prefix_match(req.get_path());
-    // req.get_path() = get_file_name(req.get_path(), loc.get_prefix());
-    // std::cout << "root> " << loc.get_root() << std::endl;
-    // std::cout << "path> " << req.get_path() << std::endl;
-    // std::cout << "prefix> " << loc.get_prefix() << std::endl;
     std::string file_name = remove_repeated_slashes(loc.get_root() + get_file_name(req.get_path(), loc.get_prefix()));
-    // std::cout << "file>>> " << file_name << std::endl;
     if (isDir(file_name) && loc.get_autoindex() == "on")
     {
         autoindex(file_name, loc.get_prefix(), loc.get_root());
@@ -488,6 +469,7 @@ void Response::get_method(server_config &s, request &req)
     }
     else if (get_file_type(file_name) == "application/x-php" || get_file_type(file_name) == "application/x-python")
     {
+        std::cout << "CGI  ||  file name:" << file_name << std::endl;
         std::pair<std::string, std::map<std::string, std::string> >resultat = Cgi::execution(file_name.c_str(), req, "/Users/sel-fcht/Desktop/latest6.0/src/cgi-bin/php-cgi");
         this->body = resultat.first;
         this->is_cgi = true;
@@ -521,7 +503,7 @@ void Response::post_method(server_config &s, request &req)
         return;
     }
     std::string new_file(strrchr(req.get_body().c_str(), '/') + get_file_ext(std::string(req.get_type())));
-    std::string file_name = loc.get_upload_path() + "/" + new_file;
+    std::string file_name = remove_repeated_slashes(loc.get_upload_path() + "/" + new_file);
     std::ifstream in(req.get_body().c_str(), std::ios::in | std::ios::binary);
     std::ofstream out(file_name, std::ios::out | std::ios::binary);
     out << in.rdbuf();
@@ -533,6 +515,13 @@ void Response::post_method(server_config &s, request &req)
 
 Response::Response(server_config server, request &req)
 {
+    this->status_code = 0;
+    this->auto_index = "";
+    this->content_lenght = 0;
+    this->written = 0;
+    this->is_complete = false;
+    this->is_file = false;
+    this->is_cgi = false;
     if (req.get_error_flag() == 400)
     {
         set_status_code(400);

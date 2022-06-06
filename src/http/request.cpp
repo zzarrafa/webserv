@@ -374,6 +374,8 @@ void    request::fill_body(char *buffer, int flag, int ret)
             new_buffer = clean_buffer(buffer, ret, &counter);
         else
             new_buffer = buffer;
+        if (this->_encoding == "chunked")
+            delete[] new_buffer;
         fd = open(this->_body.c_str(), O_RDWR | O_APPEND, 0666);
         write(fd, new_buffer, ret - counter);
         close(fd);

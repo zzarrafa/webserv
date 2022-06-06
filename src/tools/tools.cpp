@@ -430,7 +430,7 @@ bool find_string(std::vector<std::string> vec, std::string str)
 
 std::string get_file_name(std::string path, std::string prefix)
 {
-	char *tmp = strdup(path.c_str());
+	const char *tmp = path.c_str();
 	tmp += prefix.size();
 	// std::cout << "9lawi" << prefix << std::endl;
 	// std::cout << "size :" << prefix.size() << std::endl;
@@ -479,10 +479,7 @@ bool is_valid_chunk(char *buf, int size, int debug)
 				while (i < size)
 				{
 					if (buf[i] == '\r')
-					{
-						std::cout << "breeak" << std::endl;
 						break ;
-					}
 					if (!isxdigit(buf[i]))
 						return false;
 					i++;

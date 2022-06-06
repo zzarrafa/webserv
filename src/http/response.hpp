@@ -8,11 +8,11 @@ class Response
     private:
         int status_code;
         std::string status;
-        size_t content_lenght;
         std::string content_type;
         std::string body;
         std::string header;
         std::string auto_index;
+        size_t content_lenght;
         size_t written;
         bool is_complete;
         bool is_file;
@@ -22,9 +22,7 @@ class Response
         Response();
         Response(server_config server, request &req);
         ~Response();
-        // copy constructor
         Response(const Response &r);
-        //assignment operator
         Response &operator=(const Response &r);
 
         void    set_status_code(int status);
