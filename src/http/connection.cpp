@@ -17,7 +17,7 @@ void connection::network_core(parsefile s)
 
 	FD_ZERO(&readfds);
 	FD_ZERO(&writefds);
-    for (auto std::map<int, int>::iterator it = s.get_ports().begin(); it != s.get_ports().end(); ++it)
+    for (std::map<int, int>::iterator it = s.get_ports().begin(); it != s.get_ports().end(); ++it)
 	{
         it->second = create_server(it->first);
 		FD_SET(it->second, &readfds);
@@ -142,6 +142,7 @@ void connection::network_core(parsefile s)
 							size_t size = 0;
 							buffer_new = get_buffer(response_map[fd]->get_written(), response_map[fd]->get_content_lenght(), response_map[fd]->get_body(), &size);
 							write(fd, buffer_new, size);
+
 							free(buffer_new);
 							response_map[fd]->set_written(size + response_map[fd]->get_written());
 							if (response_map[fd]->get_written() >= response_map[fd]->get_content_lenght())

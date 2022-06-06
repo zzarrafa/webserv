@@ -96,6 +96,13 @@ void parsefile::fill_servers(std::ifstream &file)
 			continue;
 		if (line.find("}") != std::string::npos)
 		{
+			server.check_config();
+			for(size_t i = 0; i < _servers.size(); i++)
+			{
+				server_config &tmp = _servers[i];
+				if (search_for_match(tmp.get_servers(), server.get_servers()) == true && tmp.get_port() == server.get_port())
+					throw std::runtime_error("Error: host already exist with same port");
+			}
 			_servers.push_back(server);
 			_ports.insert(std::make_pair(server.get_port(), 0));
 			return ;
@@ -313,7 +320,7 @@ void parsefile::print_servers()
 			std::cout << "	- " << _servers[i].get_servers()[k] << std::endl;
 		std::cout << " > CGI path: " << std::endl;
 		std::map<std::string, std::string> map_tmp = _servers[i].get_cgi_path();
-		for (auto std::map<std::string, std::string>::iterator it = map_tmp.begin(); it != map_tmp.end(); it++)
+		for (std::map<std::string, std::string>::iterator it = map_tmp.begin(); it != map_tmp.end(); it++)
 				std::cout << it->first << " " << it->second << std::endl;
 		// std::cout << " > Locations:" << std::endl;
 		// for (size_t j = 0; j < _servers[i].get_locations().size(); j++)

@@ -40,20 +40,9 @@ std::vector<server_config> get_servers_with_same_port(parsefile &pf, int port)
 	std::vector<server_config> vec;
 	for (size_t i = 0 ; i < pf.get_servers().size() ; i++)
 	{
-		// std::cerr << i << std::endl;
 		if (pf.get_servers()[i].get_port() == port)
-		{
-			// std::cerr << "port : " << port << std::endl;
-			// std::cerr << "server : " << pf.get_servers()[i].get_port() << std::endl;
 			vec.push_back(pf.get_servers()[i]);
-		}
 	}
-	// for (size_t i = 0; i < vec.size(); i++)
-	// {
-	// 	std::cout << "server" << i << ">" << std::endl;
-	// 	// vec[i].print_server();
-	// }
-	// std::cout << "vec size: " << vec.size() << std::endl;
 	return (vec);
 }
 
@@ -86,7 +75,6 @@ int create_server(int port)
 		perror("listen");
 		exit(EXIT_FAILURE);
 	}
-	// std::cout << "Created " << fd_socket <<  " For Port " << port << std::endl;
 	return (fd_socket);
 }
 
@@ -589,4 +577,17 @@ std::string get_file_content(std::string path)
 		file.close();
 	}
 	return (content);
+}
+
+bool	search_for_match(std::vector<std::string> vec1, std::vector<std::string> vec2)
+{
+	for (size_t i = 0; i < vec1.size(); i++)
+	{
+		for (size_t j = 0; j < vec2.size(); j++)
+		{
+			if (vec1[i] == vec2[j])
+				return true;
+		}
+	}
+	return false;
 }

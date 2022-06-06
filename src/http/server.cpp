@@ -133,6 +133,7 @@ server_config::server_config()
 	this->servers = std::vector<std::string>();
 	this->locations = std::vector<location_config>();
 	this->fd_socket = 0;
+	this->cgi_path = std::map<std::string, std::string>();
 }
 //copy constructor
 server_config::server_config(const server_config &src)
@@ -235,7 +236,21 @@ std::map<std::string, std::string> server_config::get_cgi_path()
 	return (this->cgi_path);
 }
 
-int server_config::longest_match(std::string str, std::string needle)
+void server_config::check_config()
+{
+	if (this->port == 0)
+		throw (std::runtime_error("port is not set"));
+	if (this->host == "")
+		throw (std::runtime_error("host is not set"));
+	if (this->error_page == "")
+		throw (std::runtime_error("error_page is not set"));
+	if (this->max_body_size == 0)
+		throw (std::runtime_error("max_body_size is not set"));
+	if (this->locations.size() == 0)
+		throw (std::runtime_error("No locations in server is not set"));
+}
+
+int	server_config::longest_match(std::string str, std::string needle)
 {
 	size_t i = 0;
 	int last_match = 0;

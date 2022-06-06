@@ -46,9 +46,9 @@ class server_config
 		std::string			host;
 		std::string			error_page;
 		size_t				max_body_size;
-		std::vector<std::string> servers;
-		std::vector<location_config> locations;
 		int					fd_socket;
+		std::vector<std::string>			servers;
+		std::vector<location_config>		locations;
 		std::map<std::string, std::string>	cgi_path;
 
 	public:
@@ -57,26 +57,27 @@ class server_config
 		server_config(const server_config &src);
 		server_config &operator=(const server_config &src);
 
-		void set_port(int);
-		void set_host(std::string);
-		void set_error_page(std::string);
-		void set_max_body_size(size_t);
-		void set_servers(std::vector<std::string>);
-		void set_locations(std::vector<location_config>);
-		size_t get_max_body_size();
-		std::string get_host();
-		std::string get_error_page();
-		std::vector<std::string> get_servers();
-		std::vector<location_config> get_locations();
-		int get_port();
-		void add_location(location_config src);
-		int create_server(int port);
-		int get_fd_socket();
-		location_config longest_prefix_match(std::string);
-		int longest_match(std::string str, std::string needle);
-		void print_server();
-		std::map<std::string, std::string> get_cgi_path();
+		void	set_port(int);
+		void	set_host(std::string);
+		void	set_error_page(std::string);
+		void	set_max_body_size(size_t);
+		void	set_servers(std::vector<std::string>);
+		void	set_locations(std::vector<location_config>);
+		size_t	get_max_body_size();
+		std::string		get_host();
+		std::string		get_error_page();
+		std::vector<std::string>		get_servers();
+		std::vector<location_config>	get_locations();
+		int		get_port();
+		void	add_location(location_config src);
+		void	check_config();
+		int		create_server(int port);
+		int		get_fd_socket();
+		int		longest_match(std::string str, std::string needle);
+		void	print_server();
 		void	add_cgi_path(std::string key, std::string value);
+		location_config			longest_prefix_match(std::string);
+		std::map<std::string, std::string>	get_cgi_path();
 };
 
 server_config get_server_by_host(std::vector<server_config> servers, std::string host);

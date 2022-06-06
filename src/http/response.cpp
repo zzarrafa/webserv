@@ -198,8 +198,8 @@ void Response::autoindex(std::string path, std::string prefix, std::string root)
     this->auto_index = get_file_name(path, root);
     for(size_t i =0; i < file.size(); i++)
     {
-        // std::cout << prefix + this->auto_index + "/" + file[i].file_name << std::endl;
-        std::string td = "<tr><td width=\"50%\"> <a href=\"" + remove_repeated_slashes(prefix + this->auto_index + "/" + file[i].file_name) +"\"> "+file[i].file_name + "</a></td>"  ;
+        std::string td;
+        td = "<tr><td width=\"50%\"> <a href=\"" + remove_repeated_slashes(prefix + this->auto_index + "/" + file[i].file_name) +"\"> "+file[i].file_name + "</a></td>";
 		body += td;
 		if (file[i].file_name == ".." || file[i].file_name == ".")
 			continue;
@@ -456,11 +456,11 @@ void Response::get_method(server_config &s, request &req)
         return;
     location_config loc = s.longest_prefix_match(req.get_path());
     // req.get_path() = get_file_name(req.get_path(), loc.get_prefix());
-    std::cout << "root> " << loc.get_root() << std::endl;
-    std::cout << "path> " << req.get_path() << std::endl;
-    std::cout << "prefix> " << loc.get_prefix() << std::endl;
+    // std::cout << "root> " << loc.get_root() << std::endl;
+    // std::cout << "path> " << req.get_path() << std::endl;
+    // std::cout << "prefix> " << loc.get_prefix() << std::endl;
     std::string file_name = remove_repeated_slashes(loc.get_root() + get_file_name(req.get_path(), loc.get_prefix()));
-    std::cout << "file>>> " << file_name << std::endl;
+    // std::cout << "file>>> " << file_name << std::endl;
     if (isDir(file_name) && loc.get_autoindex() == "on")
     {
         autoindex(file_name, loc.get_prefix(), loc.get_root());
