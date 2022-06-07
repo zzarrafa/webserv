@@ -71,9 +71,6 @@ void connection::network_core(parsefile s)
 							if (chunking_map.find(fd) == chunking_map.end())
 							{
 								request	req(buffer, ret);
-								std::cout << "-------------------------------" << std::endl;
-								req.print_request();
-								std::cout << "-------------------------------" << std::endl;
 								if (req.get_is_complete())
 								{
 									FD_SET(fd, &copy_write);
@@ -111,7 +108,7 @@ void connection::network_core(parsefile s)
 						server_config tmp = get_server_by_host(server, serving_map[fd].get_host());
 						if (response_map.find(fd) != response_map.end())
 						{
-							std::cout << "first!" << std::endl;
+							// std::cout << "first!" << std::endl;
 							size_t size = 0;
 							buffer_new = get_buffer(response_map[fd]->get_written(), response_map[fd]->get_content_lenght(), response_map[fd]->get_body(), &size);
 							write(fd, buffer_new, size);
@@ -137,9 +134,9 @@ void connection::network_core(parsefile s)
 						if (!rep->get_is_file())
 						{
 							int w = write(fd, rep->get_header().c_str(), rep->get_header().size());
-		
-							std::cout << "Write: " << w << std::endl;
-							std::cout << "Size: " << rep->get_header().size() << std::endl;
+							std::cout << "enterd!" << std::endl;
+							 std::cout << "Write: " << w << std::endl;
+							// std::cout << "Size: " << rep->get_header().size() << std::endl;
 							FD_CLR(fd, &copy_write);
 							serving_map.erase(fd);
 							delete rep;
@@ -151,7 +148,7 @@ void connection::network_core(parsefile s)
 							if (rep->get_is_complete())
 							{
 								std::cout << "--------------Response-----------------" << std::endl;
-								std::cout << "Header: " << rep->get_header() << std::endl;
+								// std::cout << "Header: " << rep->get_header() << std::endl;
 								std::cout << "---------------------------------------" << std::endl;
 								buffer_new = get_buffer_with_headers(rep, &size);
 								write(fd, buffer_new, size);

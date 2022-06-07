@@ -25,6 +25,7 @@ request::request(const request &src)
     this->_headers_len = src._headers_len;
     this->_headers = src._headers;
     this->_error_flag = src._error_flag;
+    this->_querry = src._querry;
 }
 
 request &request::operator=(const request &src)
@@ -44,6 +45,7 @@ request &request::operator=(const request &src)
     this->_headers_len = src._headers_len;
     this->_headers = src._headers;
     this->_error_flag = src._error_flag;
+    this->_querry = src._querry;
     return (*this);
 }
 
@@ -190,21 +192,28 @@ int request::get_error_flag()
     return (this->_error_flag);
 }
 
+std::string request::get_querry()
+{
+    return (this->_querry);
+}
+
+void request::set_querry(std::string value)
+{
+    this->_querry = value;
+}
+
 void request::check_if_complete()
 {
-    // if (this->_method == "GET" || this->_method == "DELETE")
-    // {
-    //     this->_encoding = "";
-    //     this->_type = "";
-    //     this->_is_complete = true;
-    //     this->_length = 0;
-    // }
     if (this->_length == (size_t)fsize(this->_body.c_str()))
         this->_is_complete = true;
+    if (this->_is_complete)
+        this->check_headers();
 }
 
 void request::check_headers()
 {
+    if (this->_version == "HTTP/1.1")
+        this->_error_flag = 400;
     if (this->_host == "none")
         this->_error_flag = 400;
     if (this->_method == "none")
@@ -217,6 +226,11 @@ void request::check_headers()
         this->_error_flag = 400;
     if (this->_length > 0 && fsize(this->_body.c_str()) == 0)
         this->_error_flag = 400;
+    if (this->_encoding != "none" && this->_encoding != "chunked")
+    {
+        std::cout << "Encoding: " << this->_encoding << std::endl;
+        this->_error_flag = 500;
+    }
 }
 
 request::request(char *buffer, int ret)
@@ -236,7 +250,7 @@ request::request(char *buffer, int ret)
     this->_body = "none";
     this->_host = "none";
     this->_path = "none";
-    this->_encoding = "";
+    this->_encoding = "none";
     this->_type = "";
 
     while ((line = read_line(buffer, ret)).size())
@@ -280,7 +294,6 @@ request::request(char *buffer, int ret)
             }
         }
     }
-    this->check_headers();
     this->check_if_complete();
     if (this->_is_complete || this->_error_flag != 0)
         return ;
@@ -386,5 +399,9 @@ void    request::fill_body(char *buffer, int flag, int ret)
         close(fd);
     }
     if (ret < SIZE_OF_BUFFER && size_t(fsize(this->_body.c_str())) >= this->_length)
+    {
+        std::cout << "Request is complete" << std::endl;
         this->_is_complete = true;
+        this->check_headers();
+    }
 }

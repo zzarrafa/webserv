@@ -13,7 +13,7 @@ SRCS =	src/webserv.cpp\
 all: $(NAME)
 
 $(NAME): $(SRCS)
-		@c++ $(FLAGS) $(SRCS) -o $(NAME)
+		@c++  $(SRCS) -o $(NAME)
 
 clean:
 	@rm -rf $(NAME)

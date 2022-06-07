@@ -21,6 +21,7 @@ private:
     size_t                              _chunk;
     size_t                              _offset;
     int                                 _error_flag;
+    std::string                         _querry;
 
 public:
     request();
@@ -41,6 +42,7 @@ public:
     void add_headers(std::string, std::string);
     void set_is_complete(bool);
     void set_error_flag(int);
+    void set_querry(std::string value);
 
     std::string get_method();
     std::string get_path();
@@ -50,6 +52,7 @@ public:
     std::string get_body();
     std::string get_encoding();
     std::string get_connection();
+    std::string get_querry();
     int get_error_flag();
 
     std::string get_header(std::string hdr);

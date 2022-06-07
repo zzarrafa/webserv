@@ -27,6 +27,7 @@ class Response
         Response &operator=(const Response &r);
 
         void    set_status_code(int status);
+        void     get_headers();
         void     get_headers(std::string file_name);
         void    set_content_lenght(size_t cl);
         void    set_content_type(std::string ct);

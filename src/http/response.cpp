@@ -221,17 +221,7 @@ void Response::generate_headers(server_config &s, request &req)
 {
     int len = 0;
     location_config loc = s.longest_prefix_match(req.get_path());
-    if (this->is_cgi)
-    {
-        header = "HTTP/1.1 200 Ok\r\n";
-        header += "Content-Length: " + std::to_string(body.size()) + "\r\n";
-	    header += "Server: mywebserver\r\n";
-	    header += "Date: " + formatted_time() + "\r\n";
-	    header += "\r\n";
-        std::cout << body.size() << std::endl;
-        header += body;
-    }
-    else if (status_code >= 301 && loc.get_redirect().size() > 0)
+    if (status_code >= 301 && loc.get_redirect().size() > 0)
     {
         header = "HTTP/1.1 301 Moved Permanently\r\n";
 	    header += "Content-Type: text/html\r\n";
@@ -265,7 +255,6 @@ void Response::generate_headers(server_config &s, request &req)
     {
         if (exists_test(remove_repeated_slashes(s.get_error_page() + "/500.html")))
         {
-            std::cout << "500.html" << std::endl;
             body = get_file_content(remove_repeated_slashes(s.get_error_page() + "/500.html"));
             len = fsize(remove_repeated_slashes(s.get_error_page() + "/500.html").c_str());
         }
@@ -423,12 +412,23 @@ void Response::generate_headers(server_config &s, request &req)
 
 void Response::get_headers(std::string file_name)
 {
-    header = "HTTP/1.1 200 ok\r\n";
+    header = "HTTP/1.1 200 OK\r\n";
 	header += "Content-Type: " + get_file_type(file_name) + "\r\n";
 	header += "Content-Length: "+ std::to_string(fsize(file_name.c_str())) + "\r\n";
 	header += "Server: mywebserv\r\n";
 	header += "Date: " + formatted_time() + "\r\n";
 	header += "\r\n";
+}
+
+void Response::get_headers()
+{
+    header = "HTTP/1.1 200 OK\r\n";
+	header += "Content-Type: text/html\r\n";
+	header += "Content-Length: " + std::to_string(body.size()) + "\r\n";
+	header += "Server: mywebserv\r\n";
+	header += "Date: " + formatted_time() + "\r\n";
+	header += "\r\n";
+    header += body;
 }
 
 void Response::delete_method(server_config &s, std::string path)
@@ -461,7 +461,6 @@ void Response::get_method(server_config &s, request &req)
     std::string file_name = remove_repeated_slashes(loc.get_root() + get_file_name(req.get_path(), loc.get_prefix()));
     if (isDir(file_name) && loc.get_autoindex() == "on")
     {
-        std::cout << "autoindex" << std::endl;
         autoindex(file_name, loc.get_prefix(), loc.get_root());
         flag = true;
         return;
@@ -485,18 +484,6 @@ void Response::get_method(server_config &s, request &req)
     {
         set_status_code(405);
         return ;
-    }
-    else if (get_file_type(file_name) == "application/x-php" || get_file_type(file_name) == "application/x-python")
-    {
-        std::pair<std::string, std::map<std::string, std::string> >resultat = Cgi::execution(file_name.c_str(), req, "/Users/sel-fcht/Desktop/latest6.0/src/cgi-bin/php-cgi");
-        this->body = resultat.first;
-        this->is_cgi = true;
-        if (body.empty())
-            set_status_code(500);
-        else
-            set_status_code(200);
-        return ;
-        // cgi code here
     }
     this->body = file_name;
     this->content_lenght = fsize(file_name.c_str());
@@ -534,6 +521,11 @@ void Response::post_method(server_config &s, request &req)
 
 Response::Response(server_config server, request &req)
 {
+    location_config loc = server.longest_prefix_match(req.get_path());
+    std::string file_name = remove_repeated_slashes(loc.get_root() + get_file_name(req.get_path(), loc.get_prefix()));
+    std::string new_file_name = split(file_name, '?')[0];
+    std::string key = "";
+
     this->status_code = 0;
     this->auto_index = "";
     this->content_lenght = 0;
@@ -542,21 +534,48 @@ Response::Response(server_config server, request &req)
     this->is_file = false;
     this->is_cgi = false;
     this->flag = false;
-    location_config loc = server.longest_prefix_match(req.get_path());
 
-    if (req.get_error_flag() == 400)
+    if (req.get_error_flag() != 0)
     {
-        set_status_code(400);
+        set_status_code(req.get_error_flag());
         generate_headers(server, req);
+        return ;
+    }
+    else if (get_file_type(new_file_name) == "application/x-php" || get_file_type(new_file_name) == "application/x-python")
+    {
+        key = get_file_type(new_file_name) == "application/x-php" ? "php" : "python";
+        if (server.get_cgi_path().size() > 0)
+        {
+            std::vector<std::string> vec = split(file_name, '?');
+            if (vec.size() == 2)
+                req.set_querry(vec[1]);
+            else
+                req.set_querry("");
+            std::pair<std::string, std::map<std::string, std::string> >resultat = Cgi::execution(file_name.c_str(), req, server.get_cgi_path()[key]);
+            this->body = resultat.first;
+            std::cout << "body: " << body << std::endl;
+            if (body.size() != 0)
+                get_headers();
+            else
+            {
+                set_status_code(500);
+                generate_headers(server, req);
+            }
+        }
+        else
+        {
+            set_status_code(500);
+            generate_headers(server, req);
+        }
+        is_file = false;
     }
     else if (loc.get_redirect().size() > 1)
     {
         set_status_code(301);
         generate_headers(server, req);
     }
-    if (req.get_method() == "GET")
+    else if (req.get_method() == "GET")
     {
-        std::cout << "GET" << std::endl;
         get_method(server, req);
         if (!flag)
             generate_headers(server, req);

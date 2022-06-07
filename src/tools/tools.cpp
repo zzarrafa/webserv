@@ -541,7 +541,6 @@ char    *get_buffer_with_headers(Response *rep, size_t *size)
 	}
 	close(fd);
 	std::cout << "size: " << *size << std::endl;
-	print_binary(buf, *size);
 	return (buf);
 }
 
