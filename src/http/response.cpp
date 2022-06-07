@@ -146,6 +146,7 @@ void Response::get_file(std::string file_name)
         ss << f.rdbuf();
         body = ss.str();  // the contenant of the file in the body / check the contenant lenght and the extention
     }
+    std::cout << "> Body: " << this->body << std::endl;
     header = "HTTP/1.1 200 ok\r\n";
 	header += "Content-Type: " + get_file_type(file_name) + "\r\n";
 	header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
@@ -169,7 +170,7 @@ int Response::search_for_default(server_config &s,std::string path)
             if (!exists_test(file_name))
             {
                 set_status_code(404);
-                return 1;
+                return 2;
             }
             get_file(file_name);
             return 1;
@@ -220,18 +221,7 @@ void Response::autoindex(std::string path, std::string prefix, std::string root)
 void Response::generate_headers(server_config &s, request &req)
 {
     int len = 0;
-    location_config loc = s.longest_prefix_match(req.get_path());
-    if (status_code >= 301 && loc.get_redirect().size() > 0)
-    {
-        header = "HTTP/1.1 301 Moved Permanently\r\n";
-	    header += "Content-Type: text/html\r\n";
-	    header += "Content-Length: 0\r\n";
-	    header += "Server: mywebserver\r\n";
-	    header += "Location: " + loc.get_redirect()[1] + "\r\n";
-	    header += "Date: " + formatted_time() + "\r\n";
-	    header += "\r\n";
-    }
-    else if (status_code == 400)
+    if (status_code == 400)
     {
         if (exists_test(remove_repeated_slashes(s.get_error_page() + "/400.html")))
         {
@@ -389,6 +379,7 @@ void Response::generate_headers(server_config &s, request &req)
         header += "Date: " + formatted_time() + "\r\n";
         header += "\r\n";
         header += body;
+        std:: cout << "Request Entity Too Large >>>" << header << std::endl;
     }
     else if (status_code == 201)
     {
@@ -455,8 +446,12 @@ void Response::delete_method(server_config &s, std::string path)
 
 void Response::get_method(server_config &s, request &req)
 {
-    if (search_for_default(s,req.get_path()))
+    int sfd = search_for_default(s, req.get_path());
+    if (sfd)
+    {
+        flag = sfd == 1 ? true : false;
         return;
+    }
     location_config loc = s.longest_prefix_match(req.get_path());
     std::string file_name = remove_repeated_slashes(loc.get_root() + get_file_name(req.get_path(), loc.get_prefix()));
     if (isDir(file_name) && loc.get_autoindex() == "on")
@@ -497,16 +492,18 @@ void Response::get_method(server_config &s, request &req)
 void Response::post_method(server_config &s, request &req)
 {
     location_config loc = s.longest_prefix_match(req.get_path());
-    if (s.get_max_body_size() < size_t(fsize(req.get_body().c_str())))
+    if (!find_string(loc.get_methods(), "POST"))
     {
+        std::cout << "405" << std::endl;
+        set_status_code(405);
+        return;
+    }
+    else if (s.get_max_body_size() < size_t(fsize(req.get_body().c_str())))
+    {
+        std::cout << "Request body too large" << std::endl;
         remove(req.get_body().c_str());
         set_status_code(413);
         return ;
-    }
-    else if (!find_string(loc.get_methods(),"POST"))
-    {
-        set_status_code(405);
-        return;
     }
     std::string new_file(strrchr(req.get_body().c_str(), '/') + get_file_ext(std::string(req.get_type())));
     std::string file_name = remove_repeated_slashes(loc.get_upload_path() + "/" + new_file);
@@ -515,6 +512,7 @@ void Response::post_method(server_config &s, request &req)
     out << in.rdbuf();
     in.close();
     out.close();
+    std::cout << "here" << std::endl;
     remove(req.get_body().c_str());
     set_status_code(201);
 }
@@ -569,13 +567,14 @@ Response::Response(server_config server, request &req)
         }
         is_file = false;
     }
-    else if (loc.get_redirect().size() > 1)
+    else if (loc.get_redirect().size() > 1 && req.get_method() == "GET")
     {
         set_status_code(301);
         generate_headers(server, req);
     }
     else if (req.get_method() == "GET")
     {
+        std::cout << "method: " << req.get_method() << std::endl;
         get_method(server, req);
         if (!flag)
             generate_headers(server, req);
@@ -588,6 +587,8 @@ Response::Response(server_config server, request &req)
     else if (req.get_method() == "POST")
     {
         post_method(server, req);
+        // std::cout << "post_method >> \n" << header << std::endl;
+        std::cout << "status_code: " << status_code << std::endl;
         generate_headers(server, req);
     }
     else
