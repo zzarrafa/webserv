@@ -192,8 +192,13 @@ int request::get_error_flag()
 
 void request::check_if_complete()
 {
-    if (this->_method == "GET" || this->_method == "DELETE")
-        this->_is_complete = true;
+    // if (this->_method == "GET" || this->_method == "DELETE")
+    // {
+    //     this->_encoding = "";
+    //     this->_type = "";
+    //     this->_is_complete = true;
+    //     this->_length = 0;
+    // }
     if (this->_length == (size_t)fsize(this->_body.c_str()))
         this->_is_complete = true;
 }

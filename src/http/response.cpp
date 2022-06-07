@@ -12,7 +12,7 @@ Response::Response()
 
 Response::~Response()
 {
-    std::cout << ">>>>>>>>>>>>>>>Response destructor called" << std::endl;
+
 }
 
 Response::Response(const Response &src)
@@ -30,6 +30,9 @@ Response &Response::operator=(const Response &src)
     this->is_file = src.is_file;
     this->header = src.header;
     this->body = src.body;
+    this->content_type = src.content_type;
+    this->status = src.status;
+    this->flag = src.flag;
     return *this;
 }
 
@@ -154,6 +157,7 @@ void Response::get_file(std::string file_name)
 
 int Response::search_for_default(server_config &s,std::string path)
 {
+    set_status_code(200);
     std::vector<location_config> locations = s.get_locations();
     size_t i ;
     std::string file_name;
@@ -161,7 +165,7 @@ int Response::search_for_default(server_config &s,std::string path)
     {
         if (locations[i].get_prefix() == path)
         {
-            file_name = locations[i].get_root() + locations[i].get_default_file();
+            file_name = remove_repeated_slashes(locations[i].get_root() + "/" + locations[i].get_default_file());
             if (!exists_test(file_name))
             {
                 set_status_code(404);
@@ -178,9 +182,15 @@ void Response::autoindex(std::string path, std::string prefix, std::string root)
 {
     // std::cout << "auto index" << std::endl;
     std::vector<Fileinfos> file = listofFiles(path);
+    path = remove_repeated_slashes(path);
     // std::cout << root << std::endl;
     std::string	body = "<html lang='en'>\n<head>\n<title>Document</title>\n</head>\n<body>\n<h1>Index OF "+ path + " </h1>\n<br>\n<table width=\"100%\">\n<hr>";
     this->auto_index = get_file_name(path, root);
+    std::cout << ">>>>>>>" << file.size() << std::endl;
+    std::cout << "path: " << path << std::endl;
+    std::cout << "prefix: " << prefix << std::endl;
+    std::cout << "root: " << root << std::endl;
+    std::cout << "file name: " << this->auto_index << std::endl;
     for(size_t i =0; i < file.size(); i++)
     {
         std::string td;
@@ -197,6 +207,7 @@ void Response::autoindex(std::string path, std::string prefix, std::string root)
 		body += td;
     }
     body +=  "</tbale></body></html>";
+    std::cout << "body: \n\n>>" << body << std::endl;
     header = "HTTP/1.1 200 Ok\r\n";
 	header += "Content-Type: text/html\r\n";
 	header += "Content-Length: "+ std::to_string(body.size()) + "\r\n";
@@ -206,12 +217,12 @@ void Response::autoindex(std::string path, std::string prefix, std::string root)
 	header += body;
 }
 
-void Response::generate_headers(server_config &s)
+void Response::generate_headers(server_config &s, request &req)
 {
     int len = 0;
+    location_config loc = s.longest_prefix_match(req.get_path());
     if (this->is_cgi)
     {
-        std::cout << "CGI" << std::endl;
         header = "HTTP/1.1 200 Ok\r\n";
         header += "Content-Length: " + std::to_string(body.size()) + "\r\n";
 	    header += "Server: mywebserver\r\n";
@@ -219,6 +230,16 @@ void Response::generate_headers(server_config &s)
 	    header += "\r\n";
         std::cout << body.size() << std::endl;
         header += body;
+    }
+    else if (status_code >= 301 && loc.get_redirect().size() > 0)
+    {
+        header = "HTTP/1.1 301 Moved Permanently\r\n";
+	    header += "Content-Type: text/html\r\n";
+	    header += "Content-Length: 0\r\n";
+	    header += "Server: mywebserver\r\n";
+	    header += "Location: " + loc.get_redirect()[1] + "\r\n";
+	    header += "Date: " + formatted_time() + "\r\n";
+	    header += "\r\n";
     }
     else if (status_code == 400)
     {
@@ -265,7 +286,6 @@ void Response::generate_headers(server_config &s)
     {
         if (exists_test(remove_repeated_slashes(s.get_error_page() + "/504.html")))
         {
-            std::cout << "504.html" << std::endl;
             body = get_file_content(remove_repeated_slashes(s.get_error_page() + "/504.html"));
             len = fsize(remove_repeated_slashes(s.get_error_page() + "/504.html").c_str());
         }
@@ -286,7 +306,6 @@ void Response::generate_headers(server_config &s)
     {
         if (exists_test(remove_repeated_slashes(s.get_error_page() + "/404.html")))
         {
-            std::cout << "404.html" << std::endl;
             body = get_file_content(remove_repeated_slashes(s.get_error_page() + "/404.html"));
             len = fsize(remove_repeated_slashes(s.get_error_page() + "/404.html").c_str());
         }
@@ -384,7 +403,6 @@ void Response::generate_headers(server_config &s)
     }
     else if (status_code == 201)
     {
-        std::cout << "201.html" << std::endl;
         header = "HTTP/1.1 201 Created\r\n";
 	    header += "Content-Type: text/html\r\n";
         header += "Content-Length: 0\r\n";
@@ -407,7 +425,7 @@ void Response::get_headers(std::string file_name)
 {
     header = "HTTP/1.1 200 ok\r\n";
 	header += "Content-Type: " + get_file_type(file_name) + "\r\n";
-	header += "Content-Length: "+ std::to_string(this->content_lenght) + "\r\n";
+	header += "Content-Length: "+ std::to_string(fsize(file_name.c_str())) + "\r\n";
 	header += "Server: mywebserv\r\n";
 	header += "Date: " + formatted_time() + "\r\n";
 	header += "\r\n";
@@ -430,7 +448,6 @@ void Response::delete_method(server_config &s, std::string path)
             set_status_code(403);
         else
             set_status_code(200);
-
     }
     else
         set_status_code(404);
@@ -444,7 +461,9 @@ void Response::get_method(server_config &s, request &req)
     std::string file_name = remove_repeated_slashes(loc.get_root() + get_file_name(req.get_path(), loc.get_prefix()));
     if (isDir(file_name) && loc.get_autoindex() == "on")
     {
+        std::cout << "autoindex" << std::endl;
         autoindex(file_name, loc.get_prefix(), loc.get_root());
+        flag = true;
         return;
     }
     else if (access(file_name.c_str(), R_OK) == -1 && access(file_name.c_str(), F_OK) == 0)
@@ -465,11 +484,10 @@ void Response::get_method(server_config &s, request &req)
     else if (!find_string(loc.get_methods(),"GET"))
     {
         set_status_code(405);
-        return;
+        return ;
     }
     else if (get_file_type(file_name) == "application/x-php" || get_file_type(file_name) == "application/x-python")
     {
-        std::cout << "CGI  ||  file name:" << file_name << std::endl;
         std::pair<std::string, std::map<std::string, std::string> >resultat = Cgi::execution(file_name.c_str(), req, "/Users/sel-fcht/Desktop/latest6.0/src/cgi-bin/php-cgi");
         this->body = resultat.first;
         this->is_cgi = true;
@@ -484,6 +502,7 @@ void Response::get_method(server_config &s, request &req)
     this->content_lenght = fsize(file_name.c_str());
     this->is_file = true;
     get_headers(file_name);
+    this->flag = true;
     if (content_lenght + header.size() < SIZE_OF_BUFFER)
         this->is_complete = true;
 }
@@ -522,30 +541,39 @@ Response::Response(server_config server, request &req)
     this->is_complete = false;
     this->is_file = false;
     this->is_cgi = false;
+    this->flag = false;
+    location_config loc = server.longest_prefix_match(req.get_path());
+
     if (req.get_error_flag() == 400)
     {
         set_status_code(400);
-        generate_headers(server);
-        return;
+        generate_headers(server, req);
+    }
+    else if (loc.get_redirect().size() > 1)
+    {
+        set_status_code(301);
+        generate_headers(server, req);
     }
     if (req.get_method() == "GET")
     {
+        std::cout << "GET" << std::endl;
         get_method(server, req);
-        generate_headers(server);
+        if (!flag)
+            generate_headers(server, req);
     }
     else if (req.get_method() == "DELETE")
     {
         delete_method(server ,req.get_path());
-        generate_headers(server);
+        generate_headers(server, req);
     }
     else if (req.get_method() == "POST")
     {
         post_method(server, req);
-        generate_headers(server);
+        generate_headers(server, req);
     }
     else
     {
         set_status_code(500);
-        generate_headers(server);
+        generate_headers(server, req);
     }
 }

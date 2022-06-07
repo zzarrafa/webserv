@@ -17,6 +17,7 @@ class Response
         bool is_complete;
         bool is_file;
         bool is_cgi;
+        bool flag;
 
     public:
         Response();
@@ -39,7 +40,7 @@ class Response
         std::vector<std::string> getfiles();
         void autoindex(std::string path, std::string prefix, std::string root);
         void get_method(server_config &s,request &req);
-        void generate_headers(server_config &s);
+        void generate_headers(server_config &s, request &req);
         void delete_method(std::string filename);
         // int search_for_path(server_config &s,std::string path);
         std::string get_header();
